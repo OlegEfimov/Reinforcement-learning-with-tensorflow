@@ -22,6 +22,26 @@ import numpy as np
 import os
 import shutil
 from car_env import CarEnv
+from websocket_server import WebsocketServer
+
+
+def new_client(client, server):
+    print("New client connected and was given id %d" % client['id'])
+    server.send_message_to_all("Hey all, a new client has joined us")
+
+
+# Called for every client disconnecting
+def client_left(client, server):
+    print("Client(%d) disconnected" % client['id'])
+
+
+# Called when a client sends a message
+def message_received(client, server, message):
+
+    if len(message) > 200:
+        message = message[:200]+'..'
+    print("Client(%d) said: %s" % (client['id'], message))
+    server.send_message(client, "action should be here")
 
 
 np.random.seed(1)
@@ -203,50 +223,73 @@ else:
     sess.run(tf.global_variables_initializer())
 
 
-def train():
+# def train():
+#     var = 2.  # control exploration
+#     for ep in range(MAX_EPISODES):
+#         s = env.reset()
+#         ep_step = 0
+
+#         for t in range(MAX_EP_STEPS):
+#         # while True:
+#             if RENDER:
+#                 env.render()
+
+#             # Added exploration noise
+#             a = actor.choose_action(s)
+#             a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+#             s_, r, done = env.step(a)
+#             M.store_transition(s, a, r, s_)
+
+#             if M.pointer > MEMORY_CAPACITY:
+#                 var = max([var*.9995, VAR_MIN])    # decay the action randomness
+#                 b_M = M.sample(BATCH_SIZE)
+#                 b_s = b_M[:, :STATE_DIM]
+#                 b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+#                 b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+#                 b_s_ = b_M[:, -STATE_DIM:]
+
+#                 critic.learn(b_s, b_a, b_r, b_s_)
+#                 actor.learn(b_s)
+
+#             s = s_
+#             ep_step += 1
+
+#             if done or t == MAX_EP_STEPS - 1:
+#             # if done:
+#                 print('Ep:', ep,
+#                       '| Steps: %i' % int(ep_step),
+#                       '| Explore: %.2f' % var,
+#                       )
+#                 break
+
+#     if os.path.isdir(path): shutil.rmtree(path)
+#     os.mkdir(path)
+#     ckpt_path = os.path.join(path, 'DDPG.ckpt')
+#     save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
+#     print("\nSave Model %s\n" % save_path)
+
+def getAction(state):
     var = 2.  # control exploration
-    for ep in range(MAX_EPISODES):
-        s = env.reset()
-        ep_step = 0
+    # Added exploration noise
+    a = actor.choose_action(state)
+    a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+    return a
 
-        for t in range(MAX_EP_STEPS):
-        # while True:
-            if RENDER:
-                env.render()
+def oneStepLearn(state, action, reward, new_state):
+    var = 2.  # control exploration
+    M.store_transition(state, action, reward, new_state)
 
-            # Added exploration noise
-            a = actor.choose_action(s)
-            a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
-            s_, r, done = env.step(a)
-            M.store_transition(s, a, r, s_)
+    if M.pointer > MEMORY_CAPACITY:
+        var = max([var*.9995, VAR_MIN])    # decay the action randomness
+        b_M = M.sample(BATCH_SIZE)
+        b_s = b_M[:, :STATE_DIM]
+        b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+        b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+        b_s_ = b_M[:, -STATE_DIM:]
 
-            if M.pointer > MEMORY_CAPACITY:
-                var = max([var*.9995, VAR_MIN])    # decay the action randomness
-                b_M = M.sample(BATCH_SIZE)
-                b_s = b_M[:, :STATE_DIM]
-                b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-                b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-                b_s_ = b_M[:, -STATE_DIM:]
+        critic.learn(b_s, b_a, b_r, b_s_)
+        actor.learn(b_s)
 
-                critic.learn(b_s, b_a, b_r, b_s_)
-                actor.learn(b_s)
-
-            s = s_
-            ep_step += 1
-
-            if done or t == MAX_EP_STEPS - 1:
-            # if done:
-                print('Ep:', ep,
-                      '| Steps: %i' % int(ep_step),
-                      '| Explore: %.2f' % var,
-                      )
-                break
-
-    if os.path.isdir(path): shutil.rmtree(path)
-    os.mkdir(path)
-    ckpt_path = os.path.join(path, 'DDPG.ckpt')
-    save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
-    print("\nSave Model %s\n" % save_path)
 
 
 def eval():
@@ -261,8 +304,19 @@ def eval():
             if done:
                 break
 
+
+def startSocketServer():
+    PORT=9001
+    server = WebsocketServer(PORT)
+    server.set_fn_new_client(new_client)
+    server.set_fn_client_left(client_left)
+    server.set_fn_message_received(message_received)
+    server.run_forever()
+
+
 if __name__ == '__main__':
     if LOAD:
         eval()
     else:
-        train()
+        # train()
+        startSocketServer()
