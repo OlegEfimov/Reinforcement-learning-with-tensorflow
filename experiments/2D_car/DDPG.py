@@ -27,7 +27,8 @@ from websocket_server import WebsocketServer
 
 def new_client(client, server):
     print("New client connected and was given id %d" % client['id'])
-    server.send_message_to_all("Hey all, a new client has joined us")
+    # server.send_message_to_all("Hey all, a new client has joined us")
+    server.send_message(client, "0,0")
 
 
 # Called for every client disconnecting
@@ -41,7 +42,7 @@ def message_received(client, server, message):
     if len(message) > 200:
         message = message[:200]+'..'
     print("Client(%d) said: %s" % (client['id'], message))
-    server.send_message(client, "action should be here")
+    server.send_message(client, "0.7,-0.3")
 
 
 np.random.seed(1)
