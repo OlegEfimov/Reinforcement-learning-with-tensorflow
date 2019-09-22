@@ -42,6 +42,9 @@ def message_received(client, server, message):
     if len(message) > 200:
         message = message[:200]+'..'
     print("Client(%d) said: %s" % (client['id'], message))
+    state = self.sensor_info[:, 0].flatten()/self.sensor_max
+
+    getAction(state)
     server.send_message(client, "0.7,-0.3")
 
 
