@@ -39,12 +39,14 @@ def client_left(client, server):
 # Called when a client sends a message
 def message_received(client, server, message):
 
-    if len(message) > 200:
-        message = message[:200]+'..'
+    inputNN = message.split(',')
+    for i in range(0, len(inputNN)):
+        inputNN[i] = float(inputNN[i])
     print("Client(%d) said: %s" % (client['id'], message))
-    state = self.sensor_info[:, 0].flatten()/self.sensor_max
+    # state = self.sensor_info[:, 0].flatten()/self.sensor_max
+    inputNN_tf = tf.constant(inputNN)
 
-    getAction(state)
+    action_tmp = getAction(inputNN_tf)
     server.send_message(client, "0.7,-0.3")
 
 
