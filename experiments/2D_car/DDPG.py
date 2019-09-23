@@ -36,6 +36,7 @@ def client_left(client, server):
     print("Client(%d) disconnected" % client['id'])
 
 
+inputNN = []
 # Called when a client sends a message
 def message_received(client, server, message):
 
@@ -44,10 +45,10 @@ def message_received(client, server, message):
         inputNN[i] = float(inputNN[i])
     print("Client(%d) said: %s" % (client['id'], message))
     # state = self.sensor_info[:, 0].flatten()/self.sensor_max
-    inputNN_tf = tf.constant(inputNN)
+    # inputNN_tf = tf.constant(inputNN)
 
-    action_tmp = getAction(inputNN_tf)
-    server.send_message(client, "0.7,-0.3")
+    # action_tmp = getAction(inputNN_tf)
+    # server.send_message(client, "0.7,-0.3")
 
 
 np.random.seed(1)
@@ -71,6 +72,7 @@ env = CarEnv(discrete_action=DISCRETE_ACTION)
 STATE_DIM = env.state_dim
 ACTION_DIM = env.action_dim
 ACTION_BOUND = env.action_bound
+state = 'start'
 
 # all placeholder for tf
 with tf.name_scope('S'):
@@ -274,6 +276,21 @@ else:
 #     save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
 #     print("\nSave Model %s\n" % save_path)
 
+def train():
+    var = 2.  # control exploration
+    while state != 'end':
+        if state == 'need_action':
+            inputNN_tf = tf.constant(inputNN)
+            action_tmp = getAction(inputNN_tf)
+            action_as_string = action_tmp.join(',')
+            server.send_message(client, action_as_string)
+
+        if state == 'need_learn':
+            critic.learn(b_s, b_a, b_r, b_s_)
+            actor.learn(b_s)
+
+
+
 def getAction(state):
     var = 2.  # control exploration
     # Added exploration noise
@@ -324,5 +341,5 @@ if __name__ == '__main__':
     if LOAD:
         eval()
     else:
-        # train()
         startSocketServer()
+        train()
