@@ -22,7 +22,9 @@ import numpy as np
 import os
 import shutil
 from car_env import CarEnv
-from websocket_server import WebsocketServer
+# from websocket_server import WebsocketServer
+import asyncio
+import websockets
 
 
 def new_client(client, server):
@@ -276,18 +278,24 @@ else:
 #     save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
 #     print("\nSave Model %s\n" % save_path)
 
-def train():
-    var = 2.  # control exploration
-    while state != 'end':
-        if state == 'need_action':
-            inputNN_tf = tf.constant(inputNN)
-            action_tmp = getAction(inputNN_tf)
-            action_as_string = action_tmp.join(',')
-            server.send_message(client, action_as_string)
+async def train():
+    async with websockets.connect('ws://localhost:9001/') as websocket:
+        await websocket.send("hello")
+        response = await websocket.recv()
+        print('-------!!!!!------')
+        print(response)
+ 
+    # var = 2.  # control exploration
+    # while state != 'end':
+    #     if state == 'need_action':
+    #         inputNN_tf = tf.constant(inputNN)
+    #         action_tmp = getAction(inputNN_tf)
+    #         action_as_string = action_tmp.join(',')
+    #         server.send_message(client, action_as_string)
 
-        if state == 'need_learn':
-            critic.learn(b_s, b_a, b_r, b_s_)
-            actor.learn(b_s)
+    #     if state == 'need_learn':
+    #         critic.learn(b_s, b_a, b_r, b_s_)
+    #         actor.learn(b_s)
 
 
 
@@ -328,18 +336,19 @@ def eval():
                 break
 
 
-def startSocketServer():
-    PORT=9001
-    server = WebsocketServer(PORT)
-    server.set_fn_new_client(new_client)
-    server.set_fn_client_left(client_left)
-    server.set_fn_message_received(message_received)
-    server.run_forever()
+# def startSocketServer():
+#     PORT=9001
+#     server = WebsocketServer(PORT)
+#     server.set_fn_new_client(new_client)
+#     server.set_fn_client_left(client_left)
+#     server.set_fn_message_received(message_received)
+#     server.run_forever()
 
 
 if __name__ == '__main__':
     if LOAD:
         eval()
     else:
-        startSocketServer()
-        train()
+        # startSocketServer()
+        asyncio.get_event_loop().run_until_complete(train())
+        # train()
