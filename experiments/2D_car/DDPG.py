@@ -278,12 +278,11 @@ else:
 #     save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
 #     print("\nSave Model %s\n" % save_path)
 
-async def train():
-    async with websockets.connect('ws://localhost:9001/') as websocket:
-        await websocket.send("hello")
-        response = await websocket.recv()
-        print('-------!!!!!------')
-        print(response)
+async def train(websocket):
+    await websocket.send("hello")
+    response = await websocket.recv()
+    print('-------!!!!!------')
+    print(response)
  
     # var = 2.  # control exploration
     # while state != 'end':
@@ -350,5 +349,8 @@ if __name__ == '__main__':
         eval()
     else:
         # startSocketServer()
-        asyncio.get_event_loop().run_until_complete(train())
         # train()
+        connection = websockets.connect('ws://localhost:9001/')
+        while state != 'end':
+            asyncio.get_event_loop().run_until_complete(train(websocket))
+
