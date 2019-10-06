@@ -4,16 +4,22 @@
 
 import asyncio
 import websockets
+import time
 
 async def hello():
     uri = "ws://localhost:9001"
+    count = 0
     async with websockets.connect(uri) as websocket:
         while True:
-            name = input("enter text: ")
+            time.sleep(0.1)
+            # name = input("enter text: ")
+            count = count + 1
+            mess = str(count)
 
-            await websocket.send(name)
+            # await websocket.send(name)
+            await websocket.send(mess)
             # print(f"> {name}")
-            # print("Client send: %s" % name)
+            # print("Client send: %s" % mess)
 
             greeting = await websocket.recv()
             # print(f"< {greeting}")

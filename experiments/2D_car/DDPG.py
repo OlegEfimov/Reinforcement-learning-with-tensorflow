@@ -25,6 +25,7 @@ from car_env import CarEnv
 # from websocket_server import WebsocketServer
 import asyncio
 import websockets
+USERS = set()
 
 
 def new_client(client, server):
@@ -40,17 +41,17 @@ def client_left(client, server):
 
 inputNN = []
 # Called when a client sends a message
-def message_received(client, server, message):
+# def message_received(client, server, message):
 
-    inputNN = message.split(',')
-    for i in range(0, len(inputNN)):
-        inputNN[i] = float(inputNN[i])
-    print("Client(%d) said: %s" % (client['id'], message))
-    # state = self.sensor_info[:, 0].flatten()/self.sensor_max
-    # inputNN_tf = tf.constant(inputNN)
+#     inputNN = message.split(',')
+#     for i in range(0, len(inputNN)):
+#         inputNN[i] = float(inputNN[i])
+#     print("Client(%d) said: %s" % (client['id'], message))
+#     # state = self.sensor_info[:, 0].flatten()/self.sensor_max
+#     # inputNN_tf = tf.constant(inputNN)
 
-    # action_tmp = getAction(inputNN_tf)
-    # server.send_message(client, "0.7,-0.3")
+#     # action_tmp = getAction(inputNN_tf)
+#     # server.send_message(client, "0.7,-0.3")
 
 
 np.random.seed(1)
@@ -334,23 +335,48 @@ def eval():
             if done:
                 break
 
+async def notify_state(message):
+    if USERS:  # asyncio.wait doesn't accept an empty list
+        mess = message
+        await asyncio.wait([user.send(mess) for user in USERS])
 
-# def startSocketServer():
-#     PORT=9001
-#     server = WebsocketServer(PORT)
-#     server.set_fn_new_client(new_client)
-#     server.set_fn_client_left(client_left)
-#     server.set_fn_message_received(message_received)
-#     server.run_forever()
+async def register(websocket):
+    USERS.add(websocket)
 
+async def unregister(websocket):
+    USERS.remove(websocket)
+
+def message_received(message):
+    inputNN = message.split(',')
+    for i in range(0, len(inputNN)):
+        inputNN[i] = float(inputNN[i])
+    return inputNN
+
+async def counter(websocket, path):
+    await register(websocket)
+    try:
+        async for message in websocket:
+            print("Client send: %s" % message)
+            tmp = message_received(message)
+            if len(tmp) > 1:
+                # state
+                inputNN_tf = tf.constant(tmp)
+                action_tmp = getAction(inputNN_tf)
+                action_as_string = action_tmp.join(',')
+                server.send_message(client, action_as_string)
+            else:
+                # reward
+                print("tmp[0]= %s" % tmp[0])
+            await notify_state("0.1,0.1")
+    finally:
+        await unregister(websocket)
 
 if __name__ == '__main__':
     if LOAD:
         eval()
     else:
-        # startSocketServer()
         # train()
-        connection = websockets.connect('ws://localhost:9001/')
-        while state != 'end':
-            asyncio.get_event_loop().run_until_complete(train(websocket))
+        start_server = websockets.serve(counter, "localhost", 9001)
 
+        asyncio.get_event_loop().run_until_complete(start_server)
+        asyncio.get_event_loop().run_forever()
