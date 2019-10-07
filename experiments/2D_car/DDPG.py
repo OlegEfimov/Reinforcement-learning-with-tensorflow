@@ -299,10 +299,13 @@ async def train(websocket):
 
 
 
-def getAction(state):
+def getAction(stateIn):
+    print("-----getAction(stateIn=")
+    print(stateIn)
     var = 2.  # control exploration
     # Added exploration noise
-    a = actor.choose_action(state)
+    # state = env.reset()
+    a = actor.choose_action(stateIn)
     a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
     return a
 
@@ -356,14 +359,17 @@ async def counter(websocket, path):
     await register(websocket)
     try:
         async for message in websocket:
-            print("Client send: %s" % message)
+            print("ClientQQQ send: %s" % message)
             tmp = message_received(message)
             if len(tmp) > 1:
                 # state
-                inputNN_tf = tf.constant(tmp)
-                action_tmp = getAction(inputNN_tf)
-                action_as_string = action_tmp.join(',')
-                server.send_message(client, action_as_string)
+                # inputNN_tf = tf.constant(tmp)
+                state_input = np.array(tmp, dtype=np.float64)
+                action_tmp = getAction(state_input)
+                print("-----action_tmp=")
+                print(action_tmp)
+                # action_as_string = action_tmp.join(',')
+                # server.send_message(client, action_as_string)
             else:
                 # reward
                 print("tmp[0]= %s" % tmp[0])
