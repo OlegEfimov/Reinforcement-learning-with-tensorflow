@@ -300,8 +300,8 @@ async def train(websocket):
 
 
 def getAction(stateIn):
-    print("-----getAction(stateIn=")
-    print(stateIn)
+    # print("-----getAction(stateIn=")
+    # print(stateIn)
     var = 2.  # control exploration
     # Added exploration noise
     # state = env.reset()
@@ -338,9 +338,10 @@ def eval():
             if done:
                 break
 
-async def notify_state(message):
+async def notify_clients(message):
     if USERS:  # asyncio.wait doesn't accept an empty list
         mess = message
+        print("send action: %s" % str(mess))
         await asyncio.wait([user.send(mess) for user in USERS])
 
 async def register(websocket):
@@ -359,21 +360,25 @@ async def counter(websocket, path):
     await register(websocket)
     try:
         async for message in websocket:
-            print("ClientQQQ send: %s" % message)
             tmp = message_received(message)
             if len(tmp) > 1:
+                print("input data: %s" % message)
                 # state
                 # inputNN_tf = tf.constant(tmp)
                 state_input = np.array(tmp, dtype=np.float64)
                 action_tmp = getAction(state_input)
-                print("-----action_tmp=")
-                print(action_tmp)
-                # action_as_string = action_tmp.join(',')
-                # server.send_message(client, action_as_string)
+                # print("-----action_tmp=")
+                # print(action_tmp)
+                action_as_string = ''
+                for num in action_tmp:
+                    action_as_string += str(num) + ','
+                # print(action_as_string)
+                await notify_clients(action_as_string[:-1])
+                # await notify_clients("0.2,0.3")
             else:
                 # reward
-                print("tmp[0]= %s" % tmp[0])
-            await notify_state("0.1,0.1")
+                print("reward: %s" % tmp[0])
+            # await notify_state("0.1,0.1")
     finally:
         await unregister(websocket)
 
