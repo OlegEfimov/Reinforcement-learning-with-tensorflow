@@ -50,7 +50,7 @@ inputNN = []
 #     # state = self.sensor_info[:, 0].flatten()/self.sensor_max
 #     # inputNN_tf = tf.constant(inputNN)
 
-#     # action_tmp = getAction(inputNN_tf)
+#     # actionArray = calculateAction(inputNN_tf)
 #     # server.send_message(client, "0.7,-0.3")
 
 
@@ -64,7 +64,7 @@ LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
 REPLACE_ITER_A = 800
 REPLACE_ITER_C = 700
-MEMORY_CAPACITY = 2000
+MEMORY_CAPACITY = 256
 BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
@@ -289,8 +289,8 @@ async def train(websocket):
     # while state != 'end':
     #     if state == 'need_action':
     #         inputNN_tf = tf.constant(inputNN)
-    #         action_tmp = getAction(inputNN_tf)
-    #         action_as_string = action_tmp.join(',')
+    #         actionArray = calculateAction(inputNN_tf)
+    #         action_as_string = actionArray.join(',')
     #         server.send_message(client, action_as_string)
 
     #     if state == 'need_learn':
@@ -299,14 +299,17 @@ async def train(websocket):
 
 
 
-def getAction(stateIn):
-    # print("-----getAction(stateIn=")
+def calculateAction(stateIn):
+    # print("-----calculateAction(stateIn=")
     # print(stateIn)
-    var = 2.  # control exploration
+    var = 0.5  # control exploration
     # Added exploration noise
     # state = env.reset()
     a = actor.choose_action(stateIn)
+    tmp333 = np.random.normal(a, var)
+    print(tmp333)
     a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+    print(a)
     return a
 
 def oneStepLearn(state, action, reward, new_state):
@@ -341,7 +344,7 @@ def eval():
 async def notify_clients(message):
     if USERS:  # asyncio.wait doesn't accept an empty list
         mess = message
-        print("send action: %s" % str(mess))
+        # print("send action: %s" % str(mess))
         await asyncio.wait([user.send(mess) for user in USERS])
 
 async def register(websocket):
@@ -357,30 +360,68 @@ def message_received(message):
     return inputNN
 
 async def counter(websocket, path):
+    var = 2.  # control exploration
     await register(websocket)
+    s_ = env.reset()
+    s = s_
+    actionArray = calculateAction(s_)
     try:
         async for message in websocket:
             tmp = message_received(message)
             if len(tmp) > 1:
-                print("input data: %s" % message)
-                # state
-                # inputNN_tf = tf.constant(tmp)
+                # print("state: %s" % message)
                 state_input = np.array(tmp, dtype=np.float64)
-                action_tmp = getAction(state_input)
-                # print("-----action_tmp=")
-                # print(action_tmp)
+                s_ = state_input
+                actionArray = calculateAction(state_input)
                 action_as_string = ''
-                for num in action_tmp:
+                for num in actionArray:
                     action_as_string += str(num) + ','
-                # print(action_as_string)
                 await notify_clients(action_as_string[:-1])
-                # await notify_clients("0.2,0.3")
             else:
                 # reward
-                print("reward: %s" % tmp[0])
-            # await notify_state("0.1,0.1")
+                reward = tmp[0]
+                # print("reward: %s" % reward)
+                r = reward
+                M.store_transition(s, actionArray, r, s_)
+                print("M.pointer: %s" % str(M.pointer))
+                if M.pointer > MEMORY_CAPACITY:
+                    var = max([var*.9995, VAR_MIN])    # decay the action randomness
+                    b_M = M.sample(BATCH_SIZE)
+                    b_s = b_M[:, :STATE_DIM]
+                    b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+                    b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+                    b_s_ = b_M[:, -STATE_DIM:]
+
+                    print("start learning")
+                    critic.learn(b_s, b_a, b_r, b_s_)
+                    actor.learn(b_s)
+                    print("end learning")
+                s = s_
+                await notify_clients('nn reward received')
     finally:
         await unregister(websocket)
+
+    # #get new state
+    # s_new = state_input
+    # a = calculateAction(state_input)
+    # notify_clients(action_as_string[:-1])
+    # #wait reward
+    # #get reward
+    # r = reward
+    # M.store_transition(s_old, a, r, s_new)
+    # if M.pointer > MEMORY_CAPACITY:
+    #     var = max([var*.9995, VAR_MIN])    # decay the action randomness
+    #     b_M = M.sample(BATCH_SIZE)
+    #     b_s = b_M[:, :STATE_DIM]
+    #     b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+    #     b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+    #     b_s_ = b_M[:, -STATE_DIM:]
+
+    #     critic.learn(b_s, b_a, b_r, b_s_)
+    #     actor.learn(b_s)
+
+    # s_old = s_new
+
 
 if __name__ == '__main__':
     if LOAD:
