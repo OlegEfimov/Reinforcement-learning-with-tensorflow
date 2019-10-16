@@ -54,9 +54,9 @@ class CarEnv(object):
         self.car_info[:2] = self.car_info[:2] + \
                             self.speed * self.dt * np.array([np.cos(self.car_info[2]), np.sin(self.car_info[2])])
 
-        self._update_sensor()
+        r = self._update_sensor()
         s = self._get_state()
-        r = -1 if self.terminal else 0
+        # r = -1 if self.terminal else 0
         return s, r, self.terminal
 
     def reset(self):
@@ -86,6 +86,7 @@ class CarEnv(object):
 
     def _update_sensor(self):
         cx, cy, rotation = self.car_info[:3]
+        tmp_reward = 0.0
 
         n_sensors = len(self.sensor_info)
         sensor_theta = np.linspace(-np.pi / 2, np.pi / 2, n_sensors)
@@ -143,8 +144,15 @@ class CarEnv(object):
             distance_index = np.argmin(possible_sensor_distance)
             self.sensor_info[si, 0] = distance
             self.sensor_info[si, -2:] = possible_intersections[distance_index]
-            if distance < self.car_info[-1]/2:
-                self.terminal = True
+            tmp_reward += distance
+            print("distance =  %s" % str(distance))
+            # if distance < self.car_info[-1]/2:
+            #     self.terminal = True
+
+        print("tmp_reward =  %s" % str(tmp_reward))
+        tmp_return = tmp_reward / (self.sensor_max * n_sensors)
+        print("tmp_return =  %s" % str(tmp_return))
+        return tmp_return
 
 
 class Viewer(pyglet.window.Window):

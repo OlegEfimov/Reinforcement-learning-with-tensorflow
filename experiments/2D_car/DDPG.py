@@ -32,9 +32,9 @@ MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
-REPLACE_ITER_A = 800
-REPLACE_ITER_C = 700
-MEMORY_CAPACITY = 2000
+REPLACE_ITER_A = 200
+REPLACE_ITER_C = 175
+MEMORY_CAPACITY = 500
 BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
@@ -218,6 +218,7 @@ def train():
             a = actor.choose_action(s)
             a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
             s_, r, done = env.step(a)
+            print("r =  %s" % str(r))
             M.store_transition(s, a, r, s_)
 
             if M.pointer > MEMORY_CAPACITY:
@@ -227,6 +228,8 @@ def train():
                 b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
                 b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
                 b_s_ = b_M[:, -STATE_DIM:]
+
+                print("b_r =  %s" % str(b_r))
 
                 critic.learn(b_s, b_a, b_r, b_s_)
                 actor.learn(b_s)
