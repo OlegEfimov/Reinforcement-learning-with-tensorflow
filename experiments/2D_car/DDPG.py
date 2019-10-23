@@ -234,77 +234,15 @@ else:
     sess.run(tf.global_variables_initializer())
 
 
-# def train():
-#     var = 2.  # control exploration
-#     for ep in range(MAX_EPISODES):
-#         s = env.reset()
-#         ep_step = 0
-
-#         for t in range(MAX_EP_STEPS):
-#         # while True:
-#             if RENDER:
-#                 env.render()
-
-#             # Added exploration noise
-#             a = actor.choose_action(s)
-#             a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
-#             s_, r, done = env.step(a)
-#             M.store_transition(s, a, r, s_)
-
-#             if M.pointer > MEMORY_CAPACITY:
-#                 var = max([var*.9995, VAR_MIN])    # decay the action randomness
-#                 b_M = M.sample(BATCH_SIZE)
-#                 b_s = b_M[:, :STATE_DIM]
-#                 b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-#                 b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-#                 b_s_ = b_M[:, -STATE_DIM:]
-
-#                 critic.learn(b_s, b_a, b_r, b_s_)
-#                 actor.learn(b_s)
-
-#             s = s_
-#             ep_step += 1
-
-#             if done or t == MAX_EP_STEPS - 1:
-#             # if done:
-#                 print('Ep:', ep,
-#                       '| Steps: %i' % int(ep_step),
-#                       '| Explore: %.2f' % var,
-#                       )
-#                 break
-
-#     if os.path.isdir(path): shutil.rmtree(path)
-#     os.mkdir(path)
-#     ckpt_path = os.path.join(path, 'DDPG.ckpt')
-#     save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
-#     print("\nSave Model %s\n" % save_path)
-
 async def train(websocket):
     await websocket.send("hello")
     response = await websocket.recv()
     print('-------!!!!!------')
     print(response)
- 
-    # var = 2.  # control exploration
-    # while state != 'end':
-    #     if state == 'need_action':
-    #         inputNN_tf = tf.constant(inputNN)
-    #         actionArray = calculateAction(inputNN_tf)
-    #         action_as_string = actionArray.join(',')
-    #         server.send_message(client, action_as_string)
-
-    #     if state == 'need_learn':
-    #         critic.learn(b_s, b_a, b_r, b_s_)
-    #         actor.learn(b_s)
-
-
 
 def calculateAction(stateIn):
-    # print("-----calculateAction(stateIn=")
-    # print(stateIn)
     var = 0.5  # control exploration
     # Added exploration noise
-    # state = env.reset()
     a = actor.choose_action(stateIn)
     tmp333 = np.random.normal(a, var)
     print(tmp333)
@@ -378,7 +316,6 @@ async def counter(websocket, path):
                     action_as_string += str(num) + ','
                 await notify_clients(action_as_string[:-1])
             else:
-                # reward
                 reward = tmp[0]
                 # print("reward: %s" % reward)
                 r = reward
@@ -400,28 +337,6 @@ async def counter(websocket, path):
                 await notify_clients('nn reward received')
     finally:
         await unregister(websocket)
-
-    # #get new state
-    # s_new = state_input
-    # a = calculateAction(state_input)
-    # notify_clients(action_as_string[:-1])
-    # #wait reward
-    # #get reward
-    # r = reward
-    # M.store_transition(s_old, a, r, s_new)
-    # if M.pointer > MEMORY_CAPACITY:
-    #     var = max([var*.9995, VAR_MIN])    # decay the action randomness
-    #     b_M = M.sample(BATCH_SIZE)
-    #     b_s = b_M[:, :STATE_DIM]
-    #     b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-    #     b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-    #     b_s_ = b_M[:, -STATE_DIM:]
-
-    #     critic.learn(b_s, b_a, b_r, b_s_)
-    #     actor.learn(b_s)
-
-    # s_old = s_new
-
 
 if __name__ == '__main__':
     if LOAD:
