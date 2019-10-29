@@ -23,6 +23,33 @@ import os
 import shutil
 from car_env import CarEnv
 
+import asyncio
+import websockets
+USERS = set()
+
+
+def new_client(client, server):
+    print("New client connected and was given id %d" % client['id'])
+    # server.send_message_to_all("Hey all, a new client has joined us")
+    server.send_message(client, "0,0")
+
+
+# Called for every client disconnecting
+def client_left(client, server):
+    print("Client(%d) disconnected" % client['id'])
+
+
+inputNN = []
+# Called when a client sends a message
+# def message_received(client, server, message):
+
+#     inputNN = message.split(',')
+#     for i in range(0, len(inputNN)):
+#         inputNN[i] = float(inputNN[i])
+#     print("Client(%d) said: %s" % (client['id'], message))
+#     # state = self.sensor_info[:, 0].flatten()/self.sensor_max
+#     # inputNN_tf = tf.constant(inputNN)
+
 
 np.random.seed(1)
 tf.set_random_seed(1)
@@ -45,6 +72,7 @@ env = CarEnv(discrete_action=DISCRETE_ACTION)
 STATE_DIM = env.state_dim
 ACTION_DIM = env.action_dim
 ACTION_BOUND = env.action_bound
+state = 'start'
 
 # all placeholder for tf
 with tf.name_scope('S'):
