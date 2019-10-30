@@ -17,8 +17,8 @@ pyglet.clock.set_fps_limit(10000)
 
 
 class CarEnv(object):
-    n_sensor = 5
-    action_dim = 1
+    n_sensor = 33
+    action_dim = 2
     state_dim = n_sensor
     viewer = None
     viewer_xy = (500, 500)
