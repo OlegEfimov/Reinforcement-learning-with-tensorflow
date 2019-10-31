@@ -57,8 +57,8 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 500
-MAX_EP_STEPS = 600
+MAX_EPISODES = 3
+MAX_EP_STEPS = 10
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
@@ -361,8 +361,11 @@ def message_received(message):
 
 async def counter(websocket, path):
     var = 2.  # control exploration
+    ep = 0
+    ep_step = 0
     await register(websocket)
     s_ = env.reset()
+    await notify_clients('reset')
     s = s_
     actionArray = calculateAction(s_)
     try:
@@ -397,7 +400,17 @@ async def counter(websocket, path):
                     actor.learn(b_s)
                     print("end learning")
                 s = s_
-                await notify_clients('nn reward received')
+                ep_step += 1
+                if ep_step > MAX_EP_STEPS - 1:
+                    ep += 1
+                    ep_step = 0
+                    if ep > MAX_EPISODES - 1:
+                        ep = 0
+                        await notify_clients('stop')
+                    else:
+                        await notify_clients('reset')
+                else:
+                    await notify_clients('nn reward received')
     finally:
         await unregister(websocket)
 
