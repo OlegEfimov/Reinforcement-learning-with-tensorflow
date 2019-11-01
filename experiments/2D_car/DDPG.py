@@ -57,8 +57,8 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 3
-MAX_EP_STEPS = 10
+MAX_EPISODES = 500
+MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
@@ -196,6 +196,9 @@ class Critic(object):
         if self.t_replace_counter % self.t_replace_iter == 0:
             self.sess.run([tf.assign(t, e) for t, e in zip(self.t_params, self.e_params)])
         self.t_replace_counter += 1
+
+    def getLoss(self, s, a, r, s_):
+        return self.sess.run(self.loss, feed_dict={S: s, self.a: a, R: r, S_: s_})
 
 
 class Memory(object):
@@ -383,6 +386,7 @@ async def counter(websocket, path):
                 await notify_clients(action_as_string[:-1])
             else:
                 # reward
+                tmp_loss = 0
                 reward = tmp[0]
                 done = tmp[1]
                 # print("reward: %s" % reward)
@@ -398,6 +402,8 @@ async def counter(websocket, path):
                     b_s_ = b_M[:, -STATE_DIM:]
 
                     # print("start learning")
+                    tmp_loss = critic.getLoss(b_s, b_a, b_r, b_s_)
+                    # print("tmp_loss: %s" % str(tmp_loss))
                     critic.learn(b_s, b_a, b_r, b_s_)
                     actor.learn(b_s)
                     # print("end learning")
@@ -424,7 +430,7 @@ async def counter(websocket, path):
                     else:
                         await notify_clients('reset')
                 else:
-                    await notify_clients('nn reward received')
+                    await notify_clients('loss:' + str(tmp_loss))
     finally:
         await unregister(websocket)
 
