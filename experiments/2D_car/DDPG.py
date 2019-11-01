@@ -64,7 +64,7 @@ LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
 REPLACE_ITER_A = 800
 REPLACE_ITER_C = 700
-MEMORY_CAPACITY = 256
+MEMORY_CAPACITY = 2000
 BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
@@ -307,9 +307,9 @@ def calculateAction(stateIn):
     # state = env.reset()
     a = actor.choose_action(stateIn)
     tmp333 = np.random.normal(a, var)
-    print(tmp333)
+    # print(tmp333)
     a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
-    print(a)
+    # print(a)
     return a
 
 def oneStepLearn(state, action, reward, new_state):
@@ -360,6 +360,7 @@ def message_received(message):
     return inputNN
 
 async def counter(websocket, path):
+    path2 = './discrete' if DISCRETE_ACTION else './continuous'
     var = 2.  # control exploration
     ep = 0
     ep_step = 0
@@ -371,7 +372,7 @@ async def counter(websocket, path):
     try:
         async for message in websocket:
             tmp = message_received(message)
-            if len(tmp) > 1:
+            if len(tmp) > 2:
                 # print("state: %s" % message)
                 state_input = np.array(tmp, dtype=np.float64)
                 s_ = state_input
@@ -383,10 +384,11 @@ async def counter(websocket, path):
             else:
                 # reward
                 reward = tmp[0]
+                done = tmp[1]
                 # print("reward: %s" % reward)
                 r = reward
                 M.store_transition(s, actionArray, r, s_)
-                print("M.pointer: %s" % str(M.pointer))
+                # print("M.pointer: %s" % str(M.pointer))
                 if M.pointer > MEMORY_CAPACITY:
                     var = max([var*.9995, VAR_MIN])    # decay the action randomness
                     b_M = M.sample(BATCH_SIZE)
@@ -395,18 +397,30 @@ async def counter(websocket, path):
                     b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
                     b_s_ = b_M[:, -STATE_DIM:]
 
-                    print("start learning")
+                    # print("start learning")
                     critic.learn(b_s, b_a, b_r, b_s_)
                     actor.learn(b_s)
-                    print("end learning")
+                    # print("end learning")
                 s = s_
                 ep_step += 1
-                if ep_step > MAX_EP_STEPS - 1:
+                if done or ep_step > MAX_EP_STEPS - 1:
+                    if done:
+                        print('Ep:', ep,
+                              '| Steps: %i' % int(ep_step),
+                              '| Explore: %.2f' % var,
+                              '| M.pointer: %s' % str(M.pointer)
+                              )
                     ep += 1
                     ep_step = 0
                     if ep > MAX_EPISODES - 1:
                         ep = 0
                         await notify_clients('stop')
+                        if os.path.isdir(path2): shutil.rmtree(path2)
+                        os.mkdir(path2)
+                        ckpt_path = os.path.join(path2, 'DDPG.ckpt')
+                        save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
+                        print("\nSave Model %s\n" % save_path)
+
                     else:
                         await notify_clients('reset')
                 else:
@@ -438,7 +452,11 @@ async def counter(websocket, path):
 
 if __name__ == '__main__':
     if LOAD:
-        eval()
+        # eval()
+        start_server = websockets.serve(counter, "localhost", 9001)
+
+        asyncio.get_event_loop().run_until_complete(start_server)
+        asyncio.get_event_loop().run_forever()
     else:
         # train()
         start_server = websockets.serve(counter, "localhost", 9001)
