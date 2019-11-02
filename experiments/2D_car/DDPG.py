@@ -57,7 +57,7 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 500
+MAX_EPISODES = 10
 MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
@@ -68,7 +68,8 @@ MEMORY_CAPACITY = 2000
 BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
-LOAD = False
+LOAD = True
+# LOAD = False
 DISCRETE_ACTION = False
 
 env = CarEnv(discrete_action=DISCRETE_ACTION)
@@ -106,6 +107,7 @@ class Actor(object):
         self.t_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Actor/target_net')
 
     def _build_net(self, s, scope, trainable):
+        print("Actor _build_net")
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.001)
@@ -174,6 +176,7 @@ class Critic(object):
             self.a_grads = tf.gradients(self.q, a)[0]   # tensor of gradients of each sample (None, a_dim)
 
     def _build_net(self, s, a, scope, trainable):
+        print("Critic _build_net")
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.01)
@@ -206,15 +209,19 @@ class Memory(object):
         self.capacity = capacity
         self.data = np.zeros((capacity, dims))
         self.pointer = 0
+        print("Memory __init__")
 
     def store_transition(self, s, a, r, s_):
+        print("Memory store_transition")
         transition = np.hstack((s, a, [r], s_))
         index = self.pointer % self.capacity  # replace the old memory with new memory
         self.data[index, :] = transition
         self.pointer += 1
+        print("Memory pointer: %s" % str(self.pointer))
 
     def sample(self, n):
         assert self.pointer >= self.capacity, 'Memory has not been fulfilled'
+        print("Memory sample")
         indices = np.random.choice(self.capacity, size=n)
         return self.data[indices, :]
 
