@@ -78,10 +78,10 @@ class Actor(object):
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.001)
-            net = tf.layers.dense(s, 100, activation=tf.nn.relu,
+            net = tf.layers.dense(s, 60, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l1',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 20, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 40, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
                                   trainable=trainable)
             with tf.variable_scope('a'):
@@ -148,13 +148,22 @@ class Critic(object):
             init_b = tf.constant_initializer(0.01)
 
             with tf.variable_scope('l1'):
-                n_l1 = 100
+                n_l1 = 60
                 w1_s = tf.get_variable('w1_s', [self.s_dim, n_l1], initializer=init_w, trainable=trainable)
                 w1_a = tf.get_variable('w1_a', [self.a_dim, n_l1], initializer=init_w, trainable=trainable)
                 b1 = tf.get_variable('b1', [1, n_l1], initializer=init_b, trainable=trainable)
                 net = tf.nn.relu6(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
-            net = tf.layers.dense(net, 20, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 80, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 70, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l3',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 60, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l4',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 50, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l5',
                                   trainable=trainable)
             with tf.variable_scope('q'):
                 q = tf.layers.dense(net, 1, kernel_initializer=init_w, bias_initializer=init_b, trainable=trainable)   # Q(s,a)
