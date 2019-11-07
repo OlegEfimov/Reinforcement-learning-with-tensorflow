@@ -57,7 +57,7 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 100
+MAX_EPISODES = 1500
 MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
@@ -107,7 +107,7 @@ class Actor(object):
         self.t_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Actor/target_net')
 
     def _build_net(self, s, scope, trainable):
-        print("Actor _build_net")
+        # print("Actor _build_net")
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.001)
@@ -176,7 +176,7 @@ class Critic(object):
             self.a_grads = tf.gradients(self.q, a)[0]   # tensor of gradients of each sample (None, a_dim)
 
     def _build_net(self, s, a, scope, trainable):
-        print("Critic _build_net")
+        # print("Critic _build_net")
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.01)
@@ -218,19 +218,19 @@ class Memory(object):
         self.capacity = capacity
         self.data = np.zeros((capacity, dims))
         self.pointer = 0
-        print("Memory __init__")
+        # print("Memory __init__")
 
     def store_transition(self, s, a, r, s_):
-        print("Memory store_transition")
+        # print("Memory store_transition")
         transition = np.hstack((s, a, [r], s_))
         index = self.pointer % self.capacity  # replace the old memory with new memory
         self.data[index, :] = transition
         self.pointer += 1
-        print("Memory pointer: %s" % str(self.pointer))
+        # print("Memory pointer: %s" % str(self.pointer))
 
     def sample(self, n):
         assert self.pointer >= self.capacity, 'Memory has not been fulfilled'
-        print("Memory sample")
+        # print("Memory sample")
         indices = np.random.choice(self.capacity, size=n)
         return self.data[indices, :]
 
@@ -301,8 +301,8 @@ else:
 async def train(websocket):
     await websocket.send("hello")
     response = await websocket.recv()
-    print('-------!!!!!------')
-    print(response)
+    # print('-------!!!!!------')
+    # print(response)
  
     # var = 2.  # control exploration
     # while state != 'end':
@@ -383,6 +383,9 @@ async def counter(websocket, path):
     var = 2.  # control exploration
     ep = 0
     ep_step = 0
+    sendActionCounter = 0
+    receiveStateCounter = 0
+    receiveRewardCounter = 0
     await register(websocket)
     s_ = env.reset()
     await notify_clients('reset')
@@ -393,12 +396,16 @@ async def counter(websocket, path):
             tmp = message_received(message)
             if len(tmp) > 2:
                 # print("state: %s" % message)
+                receiveStateCounter += 1
+                print("receiveStateCounter =  %s" % str(receiveStateCounter))
                 state_input = np.array(tmp, dtype=np.float64)
                 s_ = state_input
                 actionArray = calculateAction(state_input)
                 action_as_string = ''
                 for num in actionArray:
                     action_as_string += str(num) + ','
+                sendActionCounter += 1
+                print("sendActionCounter =  %s" % str(sendActionCounter))
                 await notify_clients(action_as_string[:-1])
             else:
                 # reward
@@ -406,6 +413,8 @@ async def counter(websocket, path):
                 reward = tmp[0]
                 done = tmp[1]
                 # print("reward: %s" % reward)
+                receiveRewardCounter += 1
+                print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
                 r = reward
                 M.store_transition(s, actionArray, r, s_)
                 # print("M.pointer: %s" % str(M.pointer))
