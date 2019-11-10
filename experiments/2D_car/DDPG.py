@@ -1,9 +1,8 @@
-"""
-Environment is a 2D car.
+"""Environment is a 2D car.
 Car has 5 sensors to obtain distance information.
 
 Car collision => reward = -1, otherwise => reward = 0.
- 
+ 
 You can train this RL by using LOAD = False, after training, this model will be store in the a local folder.
 Using LOAD = True to reload the trained model for playing.
 
@@ -57,14 +56,14 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 1500
-MAX_EP_STEPS = 600
-LR_A = 1e-4  # learning rate for actor
-LR_C = 1e-4  # learning rate for critic
-GAMMA = 0.9  # reward discount
-REPLACE_ITER_A = 800
-REPLACE_ITER_C = 700
-MEMORY_CAPACITY = 2000
+MAX_EPISODES = 1600
+MAX_EP_STEPS = 200
+LR_A = 1e-4 # learning rate for actor
+LR_C = 1e-4 # learning rate for critic
+GAMMA = 0.9 # reward discount
+REPLACE_ITER_A = 1100
+REPLACE_ITER_C = 1000
+MEMORY_CAPACITY = 1000
 BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
@@ -111,16 +110,19 @@ class Actor(object):
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.001)
-            net = tf.layers.dense(s, 60, activation=tf.nn.relu,
+            net = tf.layers.dense(s, 60, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l1',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 40, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 40, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 10, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l3',
                                   trainable=trainable)
             with tf.variable_scope('a'):
                 actions = tf.layers.dense(net, self.a_dim, activation=tf.nn.tanh, kernel_initializer=init_w,
                                           name='a', trainable=trainable)
-                scaled_a = tf.multiply(actions, self.action_bound, name='scaled_a')  # Scale output to -action_bound to action_bound
+                scaled_a = tf.multiply(actions, self.action_bound, name='scaled_a') # Scale output to -action_bound to action_bound
         return scaled_a
 
     def learn(self, s):   # batch update
@@ -130,15 +132,15 @@ class Actor(object):
         self.t_replace_counter += 1
 
     def choose_action(self, s):
-        s = s[np.newaxis, :]    # single state
-        return self.sess.run(self.a, feed_dict={S: s})[0]  # single action
+        s = s[np.newaxis, :] # single state
+        return self.sess.run(self.a, feed_dict={S: s})[0] # single action
 
     def add_grad_to_graph(self, a_grads):
         with tf.variable_scope('policy_grads'):
             self.policy_grads = tf.gradients(ys=self.a, xs=self.e_params, grad_ys=a_grads)
 
         with tf.variable_scope('A_train'):
-            opt = tf.train.RMSPropOptimizer(-self.lr)  # (- learning rate) for ascent policy
+            opt = tf.train.RMSPropOptimizer(-self.lr) # (- learning rate) for ascent policy
             self.train_op = opt.apply_gradients(zip(self.policy_grads, self.e_params))
 
 
@@ -158,7 +160,7 @@ class Critic(object):
             self.q = self._build_net(S, self.a, 'eval_net', trainable=True)
 
             # Input (s_, a_), output q_ for q_target
-            self.q_ = self._build_net(S_, a_, 'target_net', trainable=False)    # target_q is based on a_ from Actor's target_net
+            self.q_ = self._build_net(S_, a_, 'target_net', trainable=False) # target_q is based on a_ from Actor's target_net
 
             self.e_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Critic/eval_net')
             self.t_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Critic/target_net')
@@ -187,17 +189,20 @@ class Critic(object):
                 w1_a = tf.get_variable('w1_a', [self.a_dim, n_l1], initializer=init_w, trainable=trainable)
                 b1 = tf.get_variable('b1', [1, n_l1], initializer=init_b, trainable=trainable)
                 net = tf.nn.relu6(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
-            net = tf.layers.dense(net, 80, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 80, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 70, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 70, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l3',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 60, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 60, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l4',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 50, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 50, activation=tf.nn.relu6,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l5',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 10, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l6',
                                   trainable=trainable)
             with tf.variable_scope('q'):
                 q = tf.layers.dense(net, 1, kernel_initializer=init_w, bias_initializer=init_b, trainable=trainable)   # Q(s,a)
@@ -223,7 +228,7 @@ class Memory(object):
     def store_transition(self, s, a, r, s_):
         # print("Memory store_transition")
         transition = np.hstack((s, a, [r], s_))
-        index = self.pointer % self.capacity  # replace the old memory with new memory
+        index = self.pointer % self.capacity # replace the old memory with new memory
         self.data[index, :] = transition
         self.pointer += 1
         # print("Memory pointer: %s" % str(self.pointer))
@@ -254,7 +259,7 @@ else:
 
 
 # def train():
-#     var = 2.  # control exploration
+#     var = 2.  # control exploration
 #     for ep in range(MAX_EPISODES):
 #         s = env.reset()
 #         ep_step = 0
@@ -266,12 +271,12 @@ else:
 
 #             # Added exploration noise
 #             a = actor.choose_action(s)
-#             a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+#             a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
 #             s_, r, done = env.step(a)
 #             M.store_transition(s, a, r, s_)
 
 #             if M.pointer > MEMORY_CAPACITY:
-#                 var = max([var*.9995, VAR_MIN])    # decay the action randomness
+#                 var = max([var*.9995, VAR_MIN])    # decay the action randomness
 #                 b_M = M.sample(BATCH_SIZE)
 #                 b_s = b_M[:, :STATE_DIM]
 #                 b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
@@ -303,8 +308,8 @@ async def train(websocket):
     response = await websocket.recv()
     # print('-------!!!!!------')
     # print(response)
- 
-    # var = 2.  # control exploration
+
+    # var = 2.  # control exploration
     # while state != 'end':
     #     if state == 'need_action':
     #         inputNN_tf = tf.constant(inputNN)
@@ -321,22 +326,22 @@ async def train(websocket):
 def calculateAction(stateIn):
     # print("-----calculateAction(stateIn=")
     # print(stateIn)
-    var = 0.5  # control exploration
+    var = 0.5 # control exploration
     # Added exploration noise
     # state = env.reset()
     a = actor.choose_action(stateIn)
     tmp333 = np.random.normal(a, var)
     # print(tmp333)
-    a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+    a = np.clip(np.random.normal(a, var), *ACTION_BOUND) # add randomness to action selection for exploration
     # print(a)
     return a
 
 def oneStepLearn(state, action, reward, new_state):
-    var = 2.  # control exploration
+    var = 2.0 # control exploration
     M.store_transition(state, action, reward, new_state)
 
     if M.pointer > MEMORY_CAPACITY:
-        var = max([var*.9995, VAR_MIN])    # decay the action randomness
+        var = max([var*.9999, VAR_MIN]) # decay the action randomness
         b_M = M.sample(BATCH_SIZE)
         b_s = b_M[:, :STATE_DIM]
         b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
@@ -361,7 +366,7 @@ def eval():
                 break
 
 async def notify_clients(message):
-    if USERS:  # asyncio.wait doesn't accept an empty list
+    if USERS: # asyncio.wait doesn't accept an empty list
         mess = message
         # print("send action: %s" % str(mess))
         await asyncio.wait([user.send(mess) for user in USERS])
@@ -380,8 +385,9 @@ def message_received(message):
 
 async def counter(websocket, path):
     path2 = './discrete' if DISCRETE_ACTION else './continuous'
-    var = 2.  # control exploration
+    var = 2.0 # control exploration
     ep = 0
+    ep_reward = 0
     ep_step = 0
     sendActionCounter = 0
     receiveStateCounter = 0
@@ -397,7 +403,7 @@ async def counter(websocket, path):
             if len(tmp) > 2:
                 # print("state: %s" % message)
                 receiveStateCounter += 1
-                print("receiveStateCounter =  %s" % str(receiveStateCounter))
+                # print("receiveStateCounter =  %s" % str(receiveStateCounter))
                 state_input = np.array(tmp, dtype=np.float64)
                 s_ = state_input
                 actionArray = calculateAction(state_input)
@@ -405,7 +411,7 @@ async def counter(websocket, path):
                 for num in actionArray:
                     action_as_string += str(num) + ','
                 sendActionCounter += 1
-                print("sendActionCounter =  %s" % str(sendActionCounter))
+                # print("sendActionCounter =  %s" % str(sendActionCounter))
                 await notify_clients(action_as_string[:-1])
             else:
                 # reward
@@ -414,12 +420,12 @@ async def counter(websocket, path):
                 done = tmp[1]
                 # print("reward: %s" % reward)
                 receiveRewardCounter += 1
-                print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
+                # print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
                 r = reward
                 M.store_transition(s, actionArray, r, s_)
                 # print("M.pointer: %s" % str(M.pointer))
                 if M.pointer > MEMORY_CAPACITY:
-                    var = max([var*.9995, VAR_MIN])    # decay the action randomness
+                    var = max([var*.9999, VAR_MIN]) # decay the action randomness
                     b_M = M.sample(BATCH_SIZE)
                     b_s = b_M[:, :STATE_DIM]
                     b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
@@ -433,15 +439,29 @@ async def counter(websocket, path):
                     actor.learn(b_s)
                     # print("end learning")
                 s = s_
+                ep_reward += r
                 ep_step += 1
-                if done or ep_step > MAX_EP_STEPS - 1:
-                    if done:
-                        print('Ep:', ep,
-                              '| Steps: %i' % int(ep_step),
-                              '| Explore: %.2f' % var,
-                              '| M.pointer: %s' % str(M.pointer)
-                              )
+
+                if ep_step > MAX_EP_STEPS-1 or done:
+                # if done:
+                    result = '| done' if done else '| ----'
+                    print('Ep:', ep,
+                          result,
+                          '| R: %i' % int(ep_reward),
+                          '| Steps: %i' % int(ep_step),
+                          '| Explore: %.2f' % var,
+                          '| M.pointer: %s' % str(M.pointer)
+                          )
+
+                # if done or ep_step > MAX_EP_STEPS - 1:
+                #     if done:
+                #         print('Ep:', ep,
+                #               '| Steps: %i' % int(ep_step),
+                #               '| Explore: %.2f' % var,
+                #               '| M.pointer: %s' % str(M.pointer)
+                #               )
                     ep += 1
+                    ep_reward = 0
                     ep_step = 0
                     if ep > MAX_EPISODES - 1:
                         ep = 0
@@ -468,7 +488,7 @@ async def counter(websocket, path):
     # r = reward
     # M.store_transition(s_old, a, r, s_new)
     # if M.pointer > MEMORY_CAPACITY:
-    #     var = max([var*.9995, VAR_MIN])    # decay the action randomness
+    #     var = max([var*.9995, VAR_MIN])    # decay the action randomness
     #     b_M = M.sample(BATCH_SIZE)
     #     b_s = b_M[:, :STATE_DIM]
     #     b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
