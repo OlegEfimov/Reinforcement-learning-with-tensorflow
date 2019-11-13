@@ -12,6 +12,10 @@ numpy >= 1.12.1
 import numpy as np
 import pyglet
 
+import asyncio
+import websockets
+
+
 
 pyglet.clock.set_fps_limit(10000)
 
@@ -219,16 +223,30 @@ class Viewer(pyglet.window.Window):
             r_xys += [x, y]
         self.car.vertices = r_xys
 
-
-if __name__ == '__main__':
+async def main_cycle():
     np.random.seed(1)
     env = CarEnv()
     env.set_fps(30)
-    for ep in range(20):
-        s = env.reset()
-        # for t in range(100):
+    s = env.reset()
+    # for ep in range(20):
+    #     s = env.reset()
+    #     # for t in range(100):
+    #     while True:
+    #         env.render()
+    #         s, r, done = env.step(env.sample_action())
+    #         if done:
+    #             break
+    uri = "ws://localhost:9001"
+    async with websockets.connect(uri) as websocket:
         while True:
             env.render()
             s, r, done = env.step(env.sample_action())
-            if done:
-                break
+            await websocket.send(name)
+            print(f"> {name}")
+
+        greeting = await websocket.recv()
+        print(f"< {greeting}")
+
+if __name__ == '__main__':
+    asyncio.get_event_loop().run_until_complete(main_cycle())
+# https://github.com/aaugustin/websockets/blob/master/example/client.py    
