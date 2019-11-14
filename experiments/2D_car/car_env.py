@@ -21,8 +21,8 @@ pyglet.clock.set_fps_limit(10000)
 
 
 class CarEnv(object):
-    n_sensor = 7
-    action_dim = 2
+    n_sensor = 5
+    action_dim = 1
     state_dim = n_sensor
     viewer = None
     viewer_xy = (500, 500)
@@ -241,11 +241,17 @@ async def main_cycle():
         while True:
             env.render()
             s, r, done = env.step(env.sample_action())
-            await websocket.send(name)
-            print(f"> {name}")
 
-        greeting = await websocket.recv()
-        print(f"< {greeting}")
+            state_as_string = ''
+            for num in s:
+                state_as_string += str(num) + ','
+            print("state_as_string: %s" % str(state_as_string[:-1]))
+            await websocket.send(state_as_string[:-1])
+            recv_data_str = ''
+            recv_data = await websocket.recv()
+            recv_data_str = str(recv_data)
+            print("recv_data: %s" % recv_data_str)
+
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(main_cycle())
