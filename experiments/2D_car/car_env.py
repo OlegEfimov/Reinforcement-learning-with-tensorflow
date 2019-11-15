@@ -228,6 +228,7 @@ async def main_cycle():
     env = CarEnv()
     env.set_fps(30)
     s = env.reset()
+    action = env.sample_action()
     # for ep in range(20):
     #     s = env.reset()
     #     # for t in range(100):
@@ -240,17 +241,24 @@ async def main_cycle():
     async with websockets.connect(uri) as websocket:
         while True:
             env.render()
-            s, r, done = env.step(env.sample_action())
+            s, r, done = env.step(action)
+            if done:
+                s = env.reset()
+                print("---------------env.reset() %s" % str(done))
+
+            print("send reward: %s" % str(r))
+            await websocket.send(r)
+
 
             state_as_string = ''
             for num in s:
                 state_as_string += str(num) + ','
-            print("state_as_string: %s" % str(state_as_string[:-1]))
+            print("send state: %s" % str(state_as_string[:-1]))
             await websocket.send(state_as_string[:-1])
             recv_data_str = ''
-            recv_data = await websocket.recv()
-            recv_data_str = str(recv_data)
-            print("recv_data: %s" % recv_data_str)
+            action = await websocket.recv()
+            recv_data_str = str(action)
+            print("receive action: %s" % recv_data_str)
 
 
 if __name__ == '__main__':
