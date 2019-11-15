@@ -56,8 +56,8 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 1600
-MAX_EP_STEPS = 200
+MAX_EPISODES = 500
+MAX_EP_STEPS = 600
 LR_A = 1e-4 # learning rate for actor
 LR_C = 1e-4 # learning rate for critic
 GAMMA = 0.9 # reward discount
@@ -474,8 +474,8 @@ async def counter(websocket, path):
 
                     else:
                         await notify_clients('reset')
-                else:
-                    await notify_clients('loss:' + str(tmp_loss))
+                # else:
+                #     await notify_clients('loss:' + str(tmp_loss))
     finally:
         await unregister(websocket)
 
