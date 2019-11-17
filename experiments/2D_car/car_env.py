@@ -246,18 +246,20 @@ async def main_cycle():
             done_mess = 0
             if recv_data_str == 'reset':
                 s = env.reset()
+                r = 0
+                done = False
+                done_mess = 0
             else:
                 # print("--------------env.step(action) action = %s" % str(action))
                 s, r, done = env.step(action)
-                print("send reward: %s" % str(r))
                 if done:
                     s = env.reset()
                     done_mess = 1
                     print("---------------env.reset() %s" % str(done))
 
-            print("send reward: %s" % str(r))
-            mess = str(r) + ',' + str(done_mess)
-            await websocket.send(mess)
+                print("send reward: %s" % str(r))
+                mess = str(r) + ',' + str(done_mess)
+                await websocket.send(mess)
 
 
             state_as_string = ''

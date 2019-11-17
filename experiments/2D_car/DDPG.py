@@ -392,6 +392,7 @@ async def counter(websocket, path):
     sendActionCounter = 0
     receiveStateCounter = 0
     receiveRewardCounter = 0
+    waitReward = False
     await register(websocket)
     s_ = env.reset()
     await notify_clients('reset')
@@ -400,7 +401,7 @@ async def counter(websocket, path):
     try:
         async for message in websocket:
             tmp = message_received(message)
-            if len(tmp) > 2:
+            if (len(tmp) > 2) & (waitReward == False):
                 # print("state: %s" % message)
                 receiveStateCounter += 1
                 # print("receiveStateCounter =  %s" % str(receiveStateCounter))
@@ -412,70 +413,78 @@ async def counter(websocket, path):
                     action_as_string += str(num) + ','
                 sendActionCounter += 1
                 # print("sendActionCounter =  %s" % str(sendActionCounter))
+                waitReward = True
                 await notify_clients(action_as_string[:-1])
             else:
-                # reward
-                tmp_loss = 0
-                reward = tmp[0]
-                done = tmp[1]
-                # print("reward: %s" % reward)
-                receiveRewardCounter += 1
-                # print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
-                r = reward
-                M.store_transition(s, actionArray, r, s_)
-                # print("M.pointer: %s" % str(M.pointer))
-                if M.pointer > MEMORY_CAPACITY:
-                    var = max([var*.9999, VAR_MIN]) # decay the action randomness
-                    b_M = M.sample(BATCH_SIZE)
-                    b_s = b_M[:, :STATE_DIM]
-                    b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-                    b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-                    b_s_ = b_M[:, -STATE_DIM:]
+                if (len(tmp) == 2) & (waitReward == True):
+                    # reward
+                    waitReward = False
+                    tmp_loss = 0
+                    reward = tmp[0]
+                    done = tmp[1]
+                    # print("reward: %s" % reward)
+                    receiveRewardCounter += 1
+                    # print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
+                    r = reward
+                    M.store_transition(s, actionArray, r, s_)
+                    print("receiveStateCounter  =  %s" % str(receiveStateCounter))
+                    print("sendActionCounter    =  %s" % str(sendActionCounter))
+                    print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
+                    # print("M.pointer: %s" % str(M.pointer))
+                    if M.pointer > MEMORY_CAPACITY:
+                        var = max([var*.9999, VAR_MIN]) # decay the action randomness
+                        b_M = M.sample(BATCH_SIZE)
+                        b_s = b_M[:, :STATE_DIM]
+                        b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+                        b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+                        b_s_ = b_M[:, -STATE_DIM:]
 
-                    # print("start learning")
-                    tmp_loss = critic.getLoss(b_s, b_a, b_r, b_s_)
-                    # print("tmp_loss: %s" % str(tmp_loss))
-                    critic.learn(b_s, b_a, b_r, b_s_)
-                    actor.learn(b_s)
-                    # print("end learning")
-                s = s_
-                ep_reward += r
-                ep_step += 1
+                        # print("start learning")
+                        tmp_loss = critic.getLoss(b_s, b_a, b_r, b_s_)
+                        # print("tmp_loss: %s" % str(tmp_loss))
+                        critic.learn(b_s, b_a, b_r, b_s_)
+                        actor.learn(b_s)
+                        # print("end learning")
+                    s = s_
+                    ep_reward += r
+                    ep_step += 1
 
-                if ep_step > MAX_EP_STEPS-1 or done:
-                # if done:
-                    result = '| done' if done else '| ----'
-                    print('Ep:', ep,
-                          result,
-                          '| R: %i' % int(ep_reward),
-                          '| Steps: %i' % int(ep_step),
-                          '| Explore: %.2f' % var,
-                          '| M.pointer: %s' % str(M.pointer)
-                          )
+                    if ep_step > MAX_EP_STEPS-1 or done:
+                    # if done:
+                        result = '| done' if done else '| ----'
+                        print('Ep:', ep,
+                              result,
+                              '| R: %i' % int(ep_reward),
+                              '| Steps: %i' % int(ep_step),
+                              '| Explore: %.2f' % var,
+                              '| M.pointer: %s' % str(M.pointer)
+                              )
 
-                # if done or ep_step > MAX_EP_STEPS - 1:
-                #     if done:
-                #         print('Ep:', ep,
-                #               '| Steps: %i' % int(ep_step),
-                #               '| Explore: %.2f' % var,
-                #               '| M.pointer: %s' % str(M.pointer)
-                #               )
-                    ep += 1
-                    ep_reward = 0
-                    ep_step = 0
-                    if ep > MAX_EPISODES - 1:
-                        ep = 0
-                        await notify_clients('stop')
-                        if os.path.isdir(path2): shutil.rmtree(path2)
-                        os.mkdir(path2)
-                        ckpt_path = os.path.join(path2, 'DDPG.ckpt')
-                        save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
-                        print("\nSave Model %s\n" % save_path)
+                    # if done or ep_step > MAX_EP_STEPS - 1:
+                    #     if done:
+                    #         print('Ep:', ep,
+                    #               '| Steps: %i' % int(ep_step),
+                    #               '| Explore: %.2f' % var,
+                    #               '| M.pointer: %s' % str(M.pointer)
+                    #               )
+                        ep += 1
+                        ep_reward = 0
+                        ep_step = 0
+                        if ep > MAX_EPISODES - 1:
+                            ep = 0
+                            await notify_clients('stop')
+                            if os.path.isdir(path2): shutil.rmtree(path2)
+                            os.mkdir(path2)
+                            ckpt_path = os.path.join(path2, 'DDPG.ckpt')
+                            save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
+                            print("\nSave Model %s\n" % save_path)
 
-                    else:
-                        await notify_clients('reset')
-                # else:
-                #     await notify_clients('loss:' + str(tmp_loss))
+                        else:
+                            await notify_clients('reset')
+                    # else:
+                    #     await notify_clients('loss:' + str(tmp_loss))
+                else:
+                    print("-------------------len(tmp) <2 && waitReward == False")
     finally:
         await unregister(websocket)
 
