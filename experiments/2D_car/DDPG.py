@@ -261,10 +261,18 @@ def start_episode_handler():
 
 def env_reset_handler():
     global step_counter
-    global s
     step_counter = 0
-    s = env.reset()
+    remoteEnv.send("reset")
+    return "wait_reset"
+
+def wait_reset_handler():
     return "start_step"
+    if reset_done:
+        global s
+        s = s_from_message
+        return "start_step"
+    else :
+        return "wait_reset"
 
 def start_step_handler():
     env.render()
