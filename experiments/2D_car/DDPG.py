@@ -23,6 +23,10 @@ import os
 import shutil
 from car_env import CarEnv
 
+TRAIN_LOOP = {"state": "start"}
+USERS = set()
+
+
 
 np.random.seed(1)
 tf.set_random_seed(1)
@@ -184,6 +188,10 @@ class Memory(object):
         indices = np.random.choice(self.capacity, size=n)
         return self.data[indices, :]
 
+    def initialSample(self, n):
+        indices = np.random.choice(self.capacity, size=n)
+        return self.data[indices, :]
+
 
 sess = tf.Session()
 
@@ -197,10 +205,134 @@ M = Memory(MEMORY_CAPACITY, dims=2 * STATE_DIM + ACTION_DIM + 1)
 saver = tf.train.Saver()
 path = './discrete' if DISCRETE_ACTION else './continuous'
 
+
+# print("step_counter = %s" % str(step_counter))
+
 if LOAD:
     saver.restore(sess, tf.train.latest_checkpoint(path))
 else:
     sess.run(tf.global_variables_initializer())
+
+var = 2.  # control exploration
+ep_counter = 0
+step_counter = 0
+s = env.reset()
+s_ = s
+a = env.sample_action()
+done = False
+b_M = M.initialSample(BATCH_SIZE)
+b_s = b_M[:, :STATE_DIM]
+b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+b_s_ = b_M[:, -STATE_DIM:]
+
+
+def state_selector(arg): 
+    switcher = { 
+        "start": start_handler, 
+        "start_episode": start_episode_handler, 
+        "stop_episode": stop_episode_handler, 
+        "env_reset": env_reset_handler, 
+        "start_step": start_step_handler, 
+        "stop_step": stop_step_handler, 
+        "nn_choose_act": nn_choose_act_handler,
+        "env_step": env_step_handler,
+        "nn_learn": nn_learn_handler,
+        "stop": stop_handler
+    } 
+    return switcher.get(arg, unknown_state_handler)
+
+def train_loop():
+    while TRAIN_LOOP["state"] != "end":
+        state = TRAIN_LOOP["state"]
+        stateHandler = state_selector(state)
+        new_state = stateHandler()
+        TRAIN_LOOP["state"] = new_state
+        print("%s\t->\t %s" % (state, new_state))
+
+
+def start_handler():
+    return "start_episode"
+
+def start_episode_handler():
+    global ep_counter
+    ep_counter = 0
+    return "env_reset"
+
+def env_reset_handler():
+    global step_counter
+    global s
+    step_counter = 0
+    s = env.reset()
+    return "start_step"
+
+def start_step_handler():
+    env.render()
+    return "nn_choose_act"
+
+def stop_step_handler():
+    global step_counter
+    print("---------------------------------step_counter = %s" % str(step_counter))
+    step_counter += 1
+    if done or step_counter >= MAX_EP_STEPS:
+        return "stop_episode"
+    else :
+        return "start_step"
+
+def stop_episode_handler():
+    global ep_counter
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ep_counter = %s" % str(ep_counter))
+    ep_counter += 1
+    if ep_counter < MAX_EPISODES:
+        return "env_reset"
+    else :
+        return "stop"
+
+def stop_handler():
+    return "end"
+
+def unknown_state_handler():
+    return "end"
+
+def nn_choose_act_handler():
+    global a
+    a = actor.choose_action(s)
+    a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+    return "env_step"
+
+def env_step_handler():
+    global s_
+    global r
+    global done
+    s_, r, done = env.step(a)
+    M.store_transition(s, a, r, s_)
+    return "nn_learn"
+
+def nn_learn_handler():
+    global var
+    global b_M
+    global b_s
+    global b_a
+    global b_r
+    global b_s_
+    global s
+    global critic
+    global actor
+
+    if M.pointer > MEMORY_CAPACITY:
+        var = max([var*.9995, VAR_MIN])    # decay the action randomness
+        b_M = M.sample(BATCH_SIZE)
+        b_s = b_M[:, :STATE_DIM]
+        b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
+        b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
+        b_s_ = b_M[:, -STATE_DIM:]
+
+        critic.learn(b_s, b_a, b_r, b_s_)
+        actor.learn(b_s)
+
+    s = s_
+    return "stop_step"
+
 
 
 def train():
@@ -265,4 +397,5 @@ if __name__ == '__main__':
     if LOAD:
         eval()
     else:
-        train()
+        # train()
+        train_loop()
