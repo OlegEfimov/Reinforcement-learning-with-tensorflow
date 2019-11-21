@@ -1,22 +1,7 @@
-"""
-Environment for 2D car driving.
-You can customize this script in a way you want.
+import asyncio
+import websockets
 
-View more on [莫烦Python] : https://morvanzhou.github.io/tutorials/
-
-
-Requirement:
-pyglet >= 1.2.4
-numpy >= 1.12.1
-"""
-import numpy as np
-import pyglet
-
-
-pyglet.clock.set_fps_limit(10000)
-
-
-class CarEnv(object):
+class RemoteCarEnv(object):
     n_sensor = 5
     action_dim = 1
     state_dim = n_sensor
@@ -49,6 +34,7 @@ class CarEnv(object):
         if self.is_discrete_action:
             action = self.actions[action]
         else:
+            # print("action = np.clip(action -  %s" % str(action))
             action = np.clip(action, *self.action_bound)[0]
         self.car_info[2] += action * np.pi/30  # max r = 6 degree
         self.car_info[:2] = self.car_info[:2] + \
@@ -219,58 +205,68 @@ class Viewer(pyglet.window.Window):
             r_xys += [x, y]
         self.car.vertices = r_xys
 
-
-# if __name__ == '__main__':
-#     np.random.seed(1)
-#     env = CarEnv()
-#     env.set_fps(30)
-#     for ep in range(20):
-#         s = env.reset()
-#         # for t in range(100):
-#         while True:
-#             env.render()
-#             s, r, done = env.step(env.sample_action())
-#             if done:
-#                 break
-##################
-import asyncio
-import websockets
-
-def mess_selector(arg): 
-    switcher = { 
-        "reset": reset_handler,
-        "wait_reset": wait_reset_handler,
-        "start_step": start_step_handler,
-        "stop_step": stop_step_handler,
-        "nn_choose_act": nn_choose_act_handler,
-        "env_step": env_step_handler,
-        "wait_s_r_done": wait_s_r_done_handler,
-        "nn_learn": nn_learn_handler,
-        "stop": stop_handler
-    } 
-    return switcher.get(arg, unknown_state_handler)
-
-def reset_handler():
-    global s
-    s = env.reset()
-    message = "reset_done"
-    await websocket.send(message)
-
-async def mess_handler(websocket, path):
-    async for message in websocket:
-        messHandler = mess_selector(message)
-        messHandler()
-
-if __name__ == '__main__':
+async def main_cycle():
     np.random.seed(1)
     env = CarEnv()
     env.set_fps(30)
     s = env.reset()
-    # env.render()
-    # s, r, done = env.step(env.sample_action())
+    action = env.sample_action()
+    recv_data_str = ''
+    # for ep in range(20):
+    #     s = env.reset()
+    #     # for t in range(100):
+    #     while True:
+    #         env.render()
+    #         s, r, done = env.step(env.sample_action())
+    #         if done:
+    #             break
+    uri = "ws://localhost:9001"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            env.render()
+            done_mess = 0
+            if recv_data_str == 'reset':
+                s = env.reset()
+                r = 0
+                done = False
+                done_mess = 0
+            else:
+                # print("--------------env.step(action) action = %s" % str(action))
+                s, r, done = env.step(action)
+                if done:
+                    s = env.reset()
+                    done_mess = 1
+                    print("---------------env.reset() %s" % str(done))
 
-    start_server = websockets.serve(mess_handler, "localhost", 9001)
+                print("send reward: %s" % str(r))
+                mess = str(r) + ',' + str(done_mess)
+                await websocket.send(mess)
 
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
 
+            state_as_string = ''
+            for num in s:
+                state_as_string += str(num) + ','
+            print("send state: %s" % str(state_as_string[:-1]))
+            await websocket.send(state_as_string[:-1])
+            # recv_data = ''
+
+            # actionZZZZZZZ = await websocket.recv()
+            # print("actionZZZZZZZ %s" % actionZZZZZZZ)
+            # recv_data_str = str(actionZZZZZZZ)
+            # if recv_data_str != 'reset':
+            #     print(type(actionZZZZZZZ))
+            #     actionTmp = float(actionZZZZZZZ)
+            #     print(type(actionTmp))
+            #     action = np.array([actionTmp])
+            # print("receive action: %s" % recv_data_str)
+
+            action = await websocket.recv()
+            recv_data_str = str(action)
+            if recv_data_str != 'reset':
+                action = np.array([float(action)])
+            print("receive action: %s" % recv_data_str)
+
+
+if __name__ == '__main__':
+    asyncio.get_event_loop().run_until_complete(main_cycle())
+# https://github.com/aaugustin/websockets/blob/master/example/client.py    

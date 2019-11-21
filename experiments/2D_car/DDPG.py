@@ -21,7 +21,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import shutil
-from car_env import CarEnv
+from remote_car_env import RemoteCarEnv
 
 TRAIN_LOOP = {"state": "start"}
 USERS = set()
@@ -45,10 +45,10 @@ RENDER = True
 LOAD = False
 DISCRETE_ACTION = False
 
-env = CarEnv(discrete_action=DISCRETE_ACTION)
-STATE_DIM = env.state_dim
-ACTION_DIM = env.action_dim
-ACTION_BOUND = env.action_bound
+remoteEnv = RemoteCarEnv(discrete_action=DISCRETE_ACTION)
+STATE_DIM = remoteEnv.state_dim
+ACTION_DIM = remoteEnv.action_dim
+ACTION_BOUND = remoteEnv.action_bound
 
 # all placeholder for tf
 with tf.name_scope('S'):
@@ -216,24 +216,28 @@ else:
 var = 2.  # control exploration
 ep_counter = 0
 step_counter = 0
-s = env.reset()
-s_ = s
-a = env.sample_action()
+s_ = None
+r = None
+done = None
+s = None
+s_ = None
+a = None
 done = False
-b_M = M.initialSample(BATCH_SIZE)
-b_s = b_M[:, :STATE_DIM]
-b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-b_s_ = b_M[:, -STATE_DIM:]
+b_M = None
+b_s = None
+b_a = None
+b_r = None
+b_s_ = None
 
 
 def state_selector(arg): 
     switcher = { 
         "start": start_handler, 
+        "wait_init_done": wait_init_done_handler,
         "start_episode": start_episode_handler,
         "stop_episode": stop_episode_handler,
-        "env_reset": env_reset_handler,
-        "wait_reset": wait_reset_handler,
+        "send_reset": send_reset_handler,
+        "wait_reset_done": wait_reset_done_handler,
         "start_step": start_step_handler,
         "stop_step": stop_step_handler,
         "nn_choose_act": nn_choose_act_handler,
@@ -244,46 +248,53 @@ def state_selector(arg):
     } 
     return switcher.get(arg, unknown_state_handler)
 
-def train_loop():
-    while TRAIN_LOOP["state"] != "end":
-        state = TRAIN_LOOP["state"]
-        stateHandler = state_selector(state)
-        new_state = stateHandler()
-        TRAIN_LOOP["state"] = new_state
-        print("%s\t->\t %s" % (state, new_state))
-
-
 def start_handler():
-    return "start_episode"
+    remoteEnv.init()
+    return "wait_init_done"
+
+def wait_init_done_handler():
+    global s
+    global s_
+    global r
+    global done
+    global a
+    if remoteEnv.getFlag("init_done"):
+        remoteEnv.setFlag("init_done", False)
+        s_ = remoteEnv.getValue("env_state")
+        r = remoteEnv.getValue("env_reward")
+        done = remoteEnv.getValue("env_done")
+        a = remoteEnv.getValue("sample_action")
+        return "start_episode"
+    else :
+        return "wait_init_done"
 
 def start_episode_handler():
     global ep_counter
     ep_counter = 0
-    return "env_reset"
+    return "send_reset"
 
-def env_reset_handler():
+def send_reset_handler():
     global step_counter
     step_counter = 0
-    remoteEnv.send("reset")
-    return "wait_reset"
+    remoteEnv.reset()
+    return "wait_reset_done"
 
-def wait_reset_handler():
-    global reset_done
-    if reset_done:
-        global s
-        s = s_from_message
-        reset_done = False
+def wait_reset_done_handler():
+    global s
+    if remoteEnv.getFlag("reset_done"):
+        remoteEnv.setFlag("reset_done", False)
+        s = remoteEnv.getValue("env_state")
         return "start_step"
     else :
-        return "wait_reset"
+        return "wait_reset_done"
 
 def start_step_handler():
-    remoteEnv.send("render")
+    remoteEnv.render()
     return "nn_choose_act"
 
 def stop_step_handler():
     global step_counter
-    print("---------------------------------step_counter = %s" % str(step_counter))
+    # print("---------------------------------step_counter = %s" % str(step_counter))
     step_counter += 1
     if done or step_counter >= MAX_EP_STEPS:
         return "stop_episode"
@@ -292,10 +303,10 @@ def stop_step_handler():
 
 def stop_episode_handler():
     global ep_counter
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ep_counter = %s" % str(ep_counter))
+    # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ep_counter = %s" % str(ep_counter))
     ep_counter += 1
     if ep_counter < MAX_EPISODES:
-        return "env_reset"
+        return "send_reset"
     else :
         return "stop"
 
@@ -312,20 +323,18 @@ def nn_choose_act_handler():
     return "env_step"
 
 def env_step_handler():
-    remoteEnv.send("step")
+    remoteEnv.step(a)
     return "wait_s_r_done"
 
 def wait_s_r_done_handler():
-    global s_r_done
-    if s_r_done:
-        global s_
-        global r
-        global done
-        s_ = s_from_message
-        r = r_from_message
-        done = done_from_message
-        s_r_done = False
-        # s_, r, done = env.step(a)
+    global s_
+    global r
+    global done
+    if remoteEnv.getFlag("s_r_done"):
+        remoteEnv.setFlag("s_r_done", False)
+        s_ = remoteEnv.getValue("env_state")
+        r = remoteEnv.getValue("env_reward")
+        done = remoteEnv.getValue("env_done")
         M.store_transition(s, a, r, s_)
         return "nn_learn"
     else :
@@ -358,68 +367,13 @@ def nn_learn_handler():
     return "stop_step"
 
 
-
-def train():
-    var = 2.  # control exploration
-    for ep in range(MAX_EPISODES):
-        s = env.reset()
-        ep_step = 0
-
-        for t in range(MAX_EP_STEPS):
-        # while True:
-            if RENDER:
-                env.render()
-
-            # Added exploration noise
-            a = actor.choose_action(s)
-            a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
-            s_, r, done = env.step(a)
-            M.store_transition(s, a, r, s_)
-
-            if M.pointer > MEMORY_CAPACITY:
-                var = max([var*.9995, VAR_MIN])    # decay the action randomness
-                b_M = M.sample(BATCH_SIZE)
-                b_s = b_M[:, :STATE_DIM]
-                b_a = b_M[:, STATE_DIM: STATE_DIM + ACTION_DIM]
-                b_r = b_M[:, -STATE_DIM - 1: -STATE_DIM]
-                b_s_ = b_M[:, -STATE_DIM:]
-
-                critic.learn(b_s, b_a, b_r, b_s_)
-                actor.learn(b_s)
-
-            s = s_
-            ep_step += 1
-
-            if done or t == MAX_EP_STEPS - 1:
-            # if done:
-                print('Ep:', ep,
-                      '| Steps: %i' % int(ep_step),
-                      '| Explore: %.2f' % var,
-                      )
-                break
-
-    if os.path.isdir(path): shutil.rmtree(path)
-    os.mkdir(path)
-    ckpt_path = os.path.join(path, 'DDPG.ckpt')
-    save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
-    print("\nSave Model %s\n" % save_path)
-
-
-def eval():
-    env.set_fps(30)
-    while True:
-        s = env.reset()
-        while True:
-            env.render()
-            a = actor.choose_action(s)
-            s_, r, done = env.step(a)
-            s = s_
-            if done:
-                break
+def train_loop():
+    while TRAIN_LOOP["state"] != "end":
+        state = TRAIN_LOOP["state"]
+        stateHandler = state_selector(state)
+        new_state = stateHandler()
+        TRAIN_LOOP["state"] = new_state
+        print("%s\t->\t %s" % (state, new_state))
 
 if __name__ == '__main__':
-    if LOAD:
-        eval()
-    else:
-        # train()
-        train_loop()
+    train_loop()
