@@ -230,13 +230,15 @@ b_s_ = b_M[:, -STATE_DIM:]
 def state_selector(arg): 
     switcher = { 
         "start": start_handler, 
-        "start_episode": start_episode_handler, 
-        "stop_episode": stop_episode_handler, 
-        "env_reset": env_reset_handler, 
-        "start_step": start_step_handler, 
-        "stop_step": stop_step_handler, 
+        "start_episode": start_episode_handler,
+        "stop_episode": stop_episode_handler,
+        "env_reset": env_reset_handler,
+        "wait_reset": wait_reset_handler,
+        "start_step": start_step_handler,
+        "stop_step": stop_step_handler,
         "nn_choose_act": nn_choose_act_handler,
         "env_step": env_step_handler,
+        "wait_s_r_done": wait_s_r_done_handler,
         "nn_learn": nn_learn_handler,
         "stop": stop_handler
     } 
@@ -266,16 +268,17 @@ def env_reset_handler():
     return "wait_reset"
 
 def wait_reset_handler():
-    return "start_step"
+    global reset_done
     if reset_done:
         global s
         s = s_from_message
+        reset_done = False
         return "start_step"
     else :
         return "wait_reset"
 
 def start_step_handler():
-    env.render()
+    remoteEnv.send("render")
     return "nn_choose_act"
 
 def stop_step_handler():
@@ -309,12 +312,25 @@ def nn_choose_act_handler():
     return "env_step"
 
 def env_step_handler():
-    global s_
-    global r
-    global done
-    s_, r, done = env.step(a)
-    M.store_transition(s, a, r, s_)
-    return "nn_learn"
+    remoteEnv.send("step")
+    return "wait_s_r_done"
+
+def wait_s_r_done_handler():
+    global s_r_done
+    if s_r_done:
+        global s_
+        global r
+        global done
+        s_ = s_from_message
+        r = r_from_message
+        done = done_from_message
+        s_r_done = False
+        # s_, r, done = env.step(a)
+        M.store_transition(s, a, r, s_)
+        return "nn_learn"
+    else :
+        return "wait_s_r_done"
+
 
 def nn_learn_handler():
     global var
