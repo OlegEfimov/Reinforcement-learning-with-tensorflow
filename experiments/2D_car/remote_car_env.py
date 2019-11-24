@@ -5,12 +5,6 @@ class RemoteCarEnv(object):
     n_sensor = 5
     action_dim = 1
     state_dim = n_sensor
-    viewer = None
-    viewer_xy = (500, 500)
-    sensor_max = 150.
-    start_point = [450, 300]
-    speed = 50.
-    dt = 0.1
 
     def __init__(self, discrete_action=False):
         self.is_discrete_action = discrete_action
@@ -29,6 +23,7 @@ class RemoteCarEnv(object):
             [120, 380],
         ])
         self.sensor_info = self.sensor_max + np.zeros((self.n_sensor, 3))  # n sensors, (distance, end_x, end_y)
+        asyncio.get_event_loop().run_until_complete(main_handler())
 
     def step(self, action):
         if self.is_discrete_action:
@@ -205,7 +200,7 @@ class Viewer(pyglet.window.Window):
             r_xys += [x, y]
         self.car.vertices = r_xys
 
-async def main_cycle():
+async def main_handler():
     np.random.seed(1)
     env = CarEnv()
     env.set_fps(30)
@@ -267,6 +262,6 @@ async def main_cycle():
             print("receive action: %s" % recv_data_str)
 
 
-if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main_cycle())
+# if __name__ == '__main__':
+#     asyncio.get_event_loop().run_until_complete(main_cycle())
 # https://github.com/aaugustin/websockets/blob/master/example/client.py    
