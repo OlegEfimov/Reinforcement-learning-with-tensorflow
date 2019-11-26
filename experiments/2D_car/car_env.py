@@ -60,6 +60,7 @@ class CarEnv(object):
         return s, r, self.terminal
 
     def reset(self):
+        print("CarEnv - reset")
         self.terminal = False
         self.car_info[:3] = np.array([*self.start_point, -np.pi/2])
         self._update_sensor()
@@ -236,6 +237,8 @@ class Viewer(pyglet.window.Window):
 import asyncio
 import websockets
 
+websocket = 0
+
 def mess_selector(arg): 
     switcher = { 
         "reset": reset_handler,
@@ -250,16 +253,49 @@ def mess_selector(arg):
     } 
     return switcher.get(arg, unknown_state_handler)
 
-def reset_handler():
+async def reset_handler():
     global s
+    global websocket
     s = env.reset()
     message = "reset_done"
+    print("reset_handler websocket.send(reset_done)")
     await websocket.send(message)
 
-async def mess_handler(websocket, path):
+async def wait_reset_handler():
+    print("wait_reset_handler()")
+
+async def start_step_handler():
+    print("start_step_handler()")
+
+async def stop_step_handler():
+    print("stop_step_handler()")
+
+async def nn_choose_act_handler():
+    print("nn_choose_act_handler()")
+
+async def env_step_handler():
+    print("env_step_handler()")
+
+async def wait_s_r_done_handler():
+    print("wait_s_r_done_handler()")
+
+async def nn_learn_handler():
+    print("nn_learn_handler()")
+
+async def stop_handler():
+    print("stop_handler()")
+
+async def unknown_state_handler():
+    print("unknown_state_handler()")
+
+
+async def mess_handler(ws, path):
+    global websocket
+    websocket = ws
     async for message in websocket:
+        print("--------for message in websocket")
         messHandler = mess_selector(message)
-        messHandler()
+        await messHandler()
 
 if __name__ == '__main__':
     np.random.seed(1)
