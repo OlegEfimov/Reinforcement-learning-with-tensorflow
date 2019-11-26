@@ -1,42 +1,72 @@
-import asyncio
-import websockets
+import websocket
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+
 
 class RemoteCarEnv(object):
     n_sensor = 5
     action_dim = 1
     state_dim = n_sensor
+    ws = 0
+    stop = False
+    play = False
 
     def __init__(self):
+        self.ws = websocket.WebSocketApp("ws://localhost:9001",
+                                  on_message = self.on_message,
+                                  on_error = self.on_error,
+                                  on_close = self.on_close)
+        self.ws.on_open = self.on_open
+        self.ws.run_forever()
 
-        asyncio.get_event_loop().run_until_complete(main_handler())
 
-    def step(self, action):
-        s = self._get_state()
-        r = -1 if self.terminal else 0
-        return s, r, self.terminal
+    def on_message(ws, message):
+        global stop
+        global play
+        if message == "stop":
+            print("on_message - stop")
+            stop = True
+            play = False
+        elif message == "continue":
+            print("on_message - continue")
+            play = True
+        print(message)
+
+    def on_error(ws, error):
+        print(error)
+
+    def on_close(ws):
+        print("### closed ###")
+
+    def on_open(ws):
+        def run(*args):
+            global stop
+            global play
+            play = True
+            while stop != True:
+                if play:
+                    play = False
+                    ws.send("client_send_mess")
+            ws.close()
+            print("thread terminating...")
+
+        thread.start_new_thread(run, ())
 
     def init(self):
+        self.ws.send("init")
 
     def reset(self):
+        self.ws.send("reset")
 
-    def sample_action(self):
+    def step(self, action):
+        mess = str(action[0]) + ',' + str(action[1])
+        self.ws.send(mess)
 
-
-    def _get_state(self):
-
-
-async def main_handler():
+    def main_handler():
     recv_data_str = ''
-    # for ep in range(20):
-    #     s = env.reset()
-    #     # for t in range(100):
-    #     while True:
-    #         env.render()
-    #         s, r, done = env.step(env.sample_action())
-    #         if done:
-    #             break
-    uri = "ws://localhost:9001"
-    async with websockets.connect(uri) as websocket:
+
         while True:
             env.render()
             done_mess = 0
@@ -63,27 +93,9 @@ async def main_handler():
                 state_as_string += str(num) + ','
             print("send state: %s" % str(state_as_string[:-1]))
             await websocket.send(state_as_string[:-1])
-            # recv_data = ''
-
-            # actionZZZZZZZ = await websocket.recv()
-            # print("actionZZZZZZZ %s" % actionZZZZZZZ)
-            # recv_data_str = str(actionZZZZZZZ)
-            # if recv_data_str != 'reset':
-            #     print(type(actionZZZZZZZ))
-            #     actionTmp = float(actionZZZZZZZ)
-            #     print(type(actionTmp))
-            #     action = np.array([actionTmp])
-            # print("receive action: %s" % recv_data_str)
 
             action = await websocket.recv()
             recv_data_str = str(action)
             if recv_data_str != 'reset':
                 action = np.array([float(action)])
             print("receive action: %s" % recv_data_str)
-
-
-# if __name__ == '__main__':
-#     asyncio.get_event_loop().run_until_complete(main_cycle())
-# https://github.com/aaugustin/websockets/blob/master/example/client.py
-# https://pypi.org/project/websocket_client/
-# https://stackoverflow.com/questions/3142705/is-there-a-websocket-client-implemented-for-python
