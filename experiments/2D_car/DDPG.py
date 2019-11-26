@@ -43,9 +43,8 @@ BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
 LOAD = False
-DISCRETE_ACTION = False
 
-remoteEnv = RemoteCarEnv(discrete_action=DISCRETE_ACTION)
+remoteEnv = RemoteCarEnv()
 STATE_DIM = remoteEnv.state_dim
 ACTION_DIM = remoteEnv.action_dim
 ACTION_BOUND = remoteEnv.action_bound
@@ -258,12 +257,12 @@ def wait_init_done_handler():
     global r
     global done
     global a
-    if remoteEnv.getFlag("init_done"):
-        remoteEnv.setFlag("init_done", False)
-        s_ = remoteEnv.getValue("env_state")
-        r = remoteEnv.getValue("env_reward")
-        done = remoteEnv.getValue("env_done")
-        a = remoteEnv.getValue("sample_action")
+    if remoteEnv.init_done:
+        remoteEnv.init_done = False
+        s_ = remoteEnv.env_state
+        r = remoteEnv.env_reward
+        done = remoteEnv.env_done
+        a = remoteEnv.sample_action
         return "start_episode"
     else :
         return "wait_init_done"
@@ -281,9 +280,9 @@ def send_reset_handler():
 
 def wait_reset_done_handler():
     global s
-    if remoteEnv.getFlag("reset_done"):
-        remoteEnv.setFlag("reset_done", False)
-        s = remoteEnv.getValue("env_state")
+    if remoteEnv.reset_done:
+        remoteEnv.reset_done = False
+        s = remoteEnv.env_state
         return "start_step"
     else :
         return "wait_reset_done"
@@ -330,11 +329,11 @@ def wait_s_r_done_handler():
     global s_
     global r
     global done
-    if remoteEnv.getFlag("s_r_done"):
-        remoteEnv.setFlag("s_r_done", False)
-        s_ = remoteEnv.getValue("env_state")
-        r = remoteEnv.getValue("env_reward")
-        done = remoteEnv.getValue("env_done")
+    if remoteEnv.s_r_done:
+        remoteEnv.s_r_done = False
+        s_ = remoteEnv.env_state
+        r = remoteEnv.env_reward
+        done = remoteEnv.env_done
         M.store_transition(s, a, r, s_)
         return "nn_learn"
     else :
