@@ -13,6 +13,13 @@ class RemoteCarEnv(object):
     stop = False
     play = False
 
+    init_done = False
+    reset_done = False
+    env_state
+    sample_action
+    env_reward
+    env_state
+
     def __init__(self):
         self.ws = websocket.WebSocketApp("ws://localhost:9001",
                                   on_message = self.on_message,
@@ -22,25 +29,46 @@ class RemoteCarEnv(object):
         self.ws.run_forever()
 
 
-    def on_message(ws, message):
-        global stop
-        global play
-        if message == "stop":
-            print("on_message - stop")
-            stop = True
-            play = False
-        elif message == "continue":
-            print("on_message - continue")
-            play = True
-        print(message)
+    def mess_selector(arg): 
+        switcher = { 
+            "init_done": init_done_handler,
+            "reset_done": reset_done_handler,
+            "start_step": start_step_handler,
+            "stop_step": stop_step_handler,
+            "nn_choose_act": nn_choose_act_handler,
+            "env_step": env_step_handler,
+            "wait_s_r_done": wait_s_r_done_handler,
+            "nn_learn": nn_learn_handler,
+            "stop": stop_handler
+        } 
+        return switcher.get(arg, unknown_state_handler)
 
-    def on_error(ws, error):
+    def init_done_handler(self):
+        self.init_done = True
+
+    def reset_done_handler(self):
+        self.reset_done = True
+
+    def on_message(self, message):
+        messHandler = mess_selector(message)
+        messHandler(message)
+
+        # if message == "stop":
+        #     print("on_message - stop")
+        #     stop = True
+        #     play = False
+        # elif message == "continue":
+        #     print("on_message - continue")
+        #     play = True
+        # print(message)
+
+    def on_error(self, error):
         print(error)
 
-    def on_close(ws):
+    def on_close(self):
         print("### closed ###")
 
-    def on_open(ws):
+    def on_open(self):
         def run(*args):
             global stop
             global play
@@ -48,16 +76,18 @@ class RemoteCarEnv(object):
             while stop != True:
                 if play:
                     play = False
-                    ws.send("client_send_mess")
+                    self.ws.send("client_send_mess")
             ws.close()
             print("thread terminating...")
 
         thread.start_new_thread(run, ())
 
     def init(self):
+        self.init_done = False
         self.ws.send("init")
 
     def reset(self):
+        self.reset_done = False
         self.ws.send("reset")
 
     def step(self, action):

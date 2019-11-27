@@ -34,18 +34,25 @@ class CarEnv(object):
         else:
             self.action_bound = [-1, 1]
 
-        self.terminal = False
-        # node1 (x, y, r, w, l),
-        self.car_info = np.array([0, 0, 0, 20, 40], dtype=np.float64)   # car coordination
         self.obstacle_coords = np.array([
             [120, 120],
             [380, 120],
             [380, 380],
             [120, 380],
         ])
+        self.init()
+
+    def init(self):
+        print("CarEnv - init")
+        self.terminal = False
+        self.car_info = np.array([0, 0, 0, 20, 40], dtype=np.float64)   # car coordination
         self.sensor_info = self.sensor_max + np.zeros((self.n_sensor, 3))  # n sensors, (distance, end_x, end_y)
 
+    def stop(self):
+        print("CarEnv - stop")
+
     def step(self, action):
+        print("CarEnv - step")
         if self.is_discrete_action:
             action = self.actions[action]
         else:
