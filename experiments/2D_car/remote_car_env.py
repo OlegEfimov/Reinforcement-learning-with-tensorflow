@@ -29,7 +29,8 @@ class RemoteCarEnv(object):
         self.ws.run_forever()
 
 
-    def mess_selector(arg): 
+    def mess_selector(message):
+        args = message.split(':')
         switcher = { 
             "init_done": init_done_handler,
             "reset_done": reset_done_handler,
@@ -41,27 +42,25 @@ class RemoteCarEnv(object):
             "nn_learn": nn_learn_handler,
             "stop": stop_handler
         } 
-        return switcher.get(arg, unknown_state_handler)
+        return switcher.get(args[0], unknown_state_handler), args[1]
 
-    def init_done_handler(self):
+    def init_done_handler(self, arg_str):
+        arg_data_str = arg_str.split(',')
+        arr_str = np.array(arg_data_str)
+        arr_float = arr_str.astype(np.float)
+        self.env_state = arr_float
         self.init_done = True
 
-    def reset_done_handler(self):
+    def reset_done_handler(self, arg_str):
+        arg_data_str = arg_str.split(',')
+        arr_str = np.array(arg_data_str)
+        arr_float = arr_str.astype(np.float)
+        self.env_state = arr_float
         self.reset_done = True
 
     def on_message(self, message):
-        messHandler = mess_selector(message)
-        messHandler(message)
-
-        # if message == "stop":
-        #     print("on_message - stop")
-        #     stop = True
-        #     play = False
-        # elif message == "continue":
-        #     print("on_message - continue")
-        #     play = True
-        # print(message)
-
+        messHandler, message_data = mess_selector(message)
+        messHandler(message_data)
     def on_error(self, error):
         print(error)
 

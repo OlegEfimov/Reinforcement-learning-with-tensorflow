@@ -19,12 +19,20 @@ def command_selector(arg):
     return switcher.get(arg, unknown_handler)
 
 async def init_handler():
-    env.init()
-    await websocket.send("init_done")
+    s = env.init()
+    message = "init_done:"
+    for num in s:
+        message += str(num) + ','
+    print("send %s" % str(message[:-1]))
+    await websocket.send(message[:-1])
 
 async def reset_handler():
     s = env.reset()
-    await websocket.send("reset_done")
+    message = "reset_done:"
+    for num in s:
+        message += str(num) + ','
+    print("send %s" % str(message[:-1]))
+    await websocket.send(message[:-1])
 
 async def step_handler():
     s, r, self.terminal = env.step()
