@@ -249,10 +249,12 @@ def state_selector(arg):
     return switcher.get(arg, unknown_state_handler)
 
 def start_handler():
+    print("DDPG - start_handler")
     remoteEnv.init()
     return "wait_init_done"
 
 def wait_init_done_handler():
+    print("DDPG - wait_init_done_handler")
     global s
     global s_
     global r
@@ -269,17 +271,20 @@ def wait_init_done_handler():
         return "wait_init_done"
 
 def start_episode_handler():
+    print("DDPG - start_episode_handler")
     global ep_counter
     ep_counter = 0
     return "send_reset"
 
 def send_reset_handler():
+    print("DDPG - send_reset_handler")
     global step_counter
     step_counter = 0
     remoteEnv.reset()
     return "wait_reset_done"
 
 def wait_reset_done_handler():
+    print("DDPG - wait_reset_done_handler")
     global s
     if remoteEnv.reset_done:
         remoteEnv.reset_done = False
@@ -289,10 +294,12 @@ def wait_reset_done_handler():
         return "wait_reset_done"
 
 def start_step_handler():
+    print("DDPG - start_step_handler")
     # remoteEnv.render()
     return "nn_choose_act"
 
 def stop_step_handler():
+    print("DDPG - stop_step_handler")
     global step_counter
     # print("---------------------------------step_counter = %s" % str(step_counter))
     step_counter += 1
@@ -302,6 +309,7 @@ def stop_step_handler():
         return "start_step"
 
 def stop_episode_handler():
+    print("DDPG - stop_episode_handler")
     global ep_counter
     # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ep_counter = %s" % str(ep_counter))
     ep_counter += 1
@@ -311,22 +319,27 @@ def stop_episode_handler():
         return "stop"
 
 def stop_handler():
+    print("DDPG - stop_handler")
     return "end"
 
 def unknown_state_handler():
+    print("DDPG - unknown_state_handler")
     return "end"
 
 def nn_choose_act_handler():
+    print("DDPG - nn_choose_act_handler")
     global a
     a = actor.choose_action(s)
     a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
     return "env_step"
 
 def env_step_handler():
+    print("DDPG - env_step_handler")
     remoteEnv.step(a)
     return "wait_step_done"
 
 def wait_step_done_handler():
+    print("DDPG - wait_step_done_handler")
     global s_
     global r
     global done
@@ -342,6 +355,7 @@ def wait_step_done_handler():
 
 
 def nn_learn_handler():
+    print("DDPG - nn_learn_handler")
     global var
     global b_M
     global b_s
@@ -368,12 +382,13 @@ def nn_learn_handler():
 
 
 def train_loop():
+    print("DDPG - train_loop")
     while TRAIN_LOOP["state"] != "end":
         state = TRAIN_LOOP["state"]
         stateHandler = state_selector(state)
         new_state = stateHandler()
         TRAIN_LOOP["state"] = new_state
-        print("%s\t->\t %s" % (state, new_state))
+        # print("%s\t->\t %s" % (state, new_state))
 
 if __name__ == '__main__':
     train_loop()

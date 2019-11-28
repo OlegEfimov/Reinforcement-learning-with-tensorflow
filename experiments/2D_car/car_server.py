@@ -5,7 +5,7 @@ import websockets
 from car_env import CarEnv
 
 
-async def init_handler(websocket):
+async def init_handler(websocket, arg_str):
     s = env.init()
     env.render()
     message = "init_done:"
@@ -14,7 +14,7 @@ async def init_handler(websocket):
     print("send %s" % str(message[:-1]))
     await websocket.send(message[:-1])
 
-async def reset_handler(websocket):
+async def reset_handler(websocket, arg_str):
     s = env.reset()
     env.render()
     message = "reset_done:"
@@ -59,7 +59,7 @@ async def mess_handler(websocket, path):
     async for message in websocket:
         print("--------for message in websocket")
         cmdHandler, message_data = command_selector(message)
-        cmdHandler(websocket, message_data)
+        await cmdHandler(websocket, message_data)
 
 if __name__ == '__main__':
     np.random.seed(1)

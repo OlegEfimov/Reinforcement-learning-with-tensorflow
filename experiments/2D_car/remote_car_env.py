@@ -1,8 +1,9 @@
 import websocket
-try:
-    import thread
-except ImportError:
-    import _thread as thread
+import threading
+# try:
+#     import thread
+# except ImportError:
+#     import _thread as thread
 
 
 class RemoteCarEnv(object):
@@ -27,14 +28,19 @@ class RemoteCarEnv(object):
                                   on_error = self.on_error,
                                   on_close = self.on_close)
         self.ws.on_open = self.on_open
-        # self.ws.run_forever()
+        wst = threading.Thread(target=self.ws.run_forever)
+        wst.daemon = True
+        wst.start()
+        # self.ws.run_forever
 
     def init(self):
+        print("RemoteCarEnv - init")
         self.init_done = False
         print("send init")
-        self.ws.send("init")
+        self.ws.send("init:0")
 
     def init_done_handler(self, arg_str):
+        print("RemoteCarEnv - init_done_handler")
         arg_data_str = arg_str.split(',')
         arr_str = np.array(arg_data_str)
         arr_float = arr_str.astype(np.float)
@@ -42,11 +48,13 @@ class RemoteCarEnv(object):
         self.init_done = True
 
     def reset(self):
+        print("RemoteCarEnv - reset")
         self.reset_done = False
         print("send reset")
-        self.ws.send("reset")
+        self.ws.send("reset:0")
 
     def reset_done_handler(self, arg_str):
+        print("RemoteCarEnv - reset_done_handler")
         arg_data_str = arg_str.split(',')
         arr_str = np.array(arg_data_str)
         arr_float = arr_str.astype(np.float)
@@ -54,6 +62,7 @@ class RemoteCarEnv(object):
         self.reset_done = True
 
     def step(self, action):
+        print("RemoteCarEnv - step")
         self.step_done = False
         message = "step:"
         for num in action:
@@ -62,6 +71,7 @@ class RemoteCarEnv(object):
         self.ws.send(message[:-1])
 
     def step_done_handler(self, arg_str):
+        print("RemoteCarEnv - step_done_handler")
         arg_data_str = arg_str.split(',')
         arr_str = np.array(arg_data_str)
         arr_float = arr_str.astype(np.float)
@@ -71,6 +81,7 @@ class RemoteCarEnv(object):
         self.step_done = True
 
     def mess_selector(message):
+        print("RemoteCarEnv - mess_selector")
         args = message.split(':')
         switcher = { 
             "init_done": init_done_handler,
@@ -82,26 +93,28 @@ class RemoteCarEnv(object):
         return switcher.get(args[0], unknown_state_handler), args[1]
 
     def on_message(self, message):
+        print("RemoteCarEnv - on_message")
         messHandler, message_data = self.mess_selector(message)
-        self.messHandler(message_data)
+        messHandler(message_data)
 
     def on_error(self, error):
-        print("### on_error ###")
+        print("RemoteCarEnv - on_error")
         print(error)
 
     def on_close(self):
-        print("### on_close ###")
+        print("RemoteCarEnv - on_close")
         ws.close()
         print("on_close ... ws.close()")
 
     def on_open(self):
-        print("### on_open ###")
-        def run(*args):
-            self.ws.run_forever()
-            print("thread terminating...")
-            ws.close()
+        print("RemoteCarEnv - on_open")
+        # def run(*args):
+        #     self.ws.run_forever()
+        #     print("thread terminating...")
+        #     ws.close()
 
-        thread.start_new_thread(run, ())
+        # thread.start_new_thread(run, ())
+
 
     # def main_handler():
     # recv_data_str = ''
