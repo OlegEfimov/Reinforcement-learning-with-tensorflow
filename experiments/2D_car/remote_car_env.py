@@ -1,9 +1,15 @@
 import websocket
 import threading
+import numpy as np
+import ast
 # try:
 #     import thread
 # except ImportError:
 #     import _thread as thread
+# def tmp_init_done_handler(arg_str):
+#     print("RemoteCarEnv - tmp_init_done_handler")
+#     arg_data_str = arg_str.split(',')
+#     np.array(arg_data_str)
 
 
 class RemoteCarEnv(object):
@@ -17,10 +23,17 @@ class RemoteCarEnv(object):
 
     init_done = False
     reset_done = False
+    step_done = False
     sample_action = None
     env_state = None
     env_reward = None
     env_done = None
+    init_done_handler0 = None
+    reset_done_handler0 = None
+    step_done_handler0 = None
+    # stop_handler0 = None
+
+
 
     def __init__(self):
         self.ws = websocket.WebSocketApp("ws://localhost:9001",
@@ -28,6 +41,13 @@ class RemoteCarEnv(object):
                                   on_error = self.on_error,
                                   on_close = self.on_close)
         self.ws.on_open = self.on_open
+
+        self.init_done_handler0 = self.init_done_handler
+        self.reset_done_handler0 = self.reset_done_handler
+        self.step_done_handler0 = self.step_done_handler
+        # self.stop_handler0 = self.stop_handler
+
+
         wst = threading.Thread(target=self.ws.run_forever)
         wst.daemon = True
         wst.start()
@@ -73,29 +93,53 @@ class RemoteCarEnv(object):
     def step_done_handler(self, arg_str):
         print("RemoteCarEnv - step_done_handler")
         arg_data_str = arg_str.split(',')
-        arr_str = np.array(arg_data_str)
-        arr_float = arr_str.astype(np.float)
-        self.env_state = arr_float[:state_dim]
-        self.env_reward = arr_float[state_dim]
-        self.env_done = arr_float[-1]
+
+        state_str0 = arg_data_str[:self.state_dim]
+        reward_str0 = arg_data_str[self.state_dim]
+        step_done_str0 = arg_data_str[-1]
+
+        arr_state_str = np.array(state_str0)
+        arr_state_float = arr_state_str.astype(np.float)
+        self.env_state = arr_state_float
+        reward_float = float(reward_str0)
+        self.env_reward = reward_float
+        self.env_done = ast.literal_eval(step_done_str0)
         self.step_done = True
 
-    def mess_selector(message):
+
+        # arr_str = np.array(arg_data_str)
+        # arr_float = arr_str.astype(np.float)
+        # self.env_state = arr_float[:state_dim]
+        # self.env_reward = arr_float[state_dim]
+        # self.env_done = arr_float[-1]
+        # self.step_done = True
+
+    def unknown_state_handler(self, arg_str):
+        print("RemoteCarEnv - unknown_state_handler")
+
+    def mess_selector(self, message):
         print("RemoteCarEnv - mess_selector")
         args = message.split(':')
         switcher = { 
-            "init_done": init_done_handler,
-            "reset_done": reset_done_handler,
-            "step_done": step_done_handler,
-            "nn_learn": nn_learn_handler,
-            "stop": stop_handler
-        } 
-        return switcher.get(args[0], unknown_state_handler), args[1]
+            # "init_done": tmp_init_done_handler
+            "init_done": self.init_done_handler0,
+            "reset_done": self.reset_done_handler0,
+            "step_done": self.step_done_handler0
+            # "stop": self.stop_handler0
+        }
+        print("RemoteCarEnv - mess_selector 2")
+        tmp555 = switcher.get(args[0], self.unknown_state_handler)
+        print("RemoteCarEnv - mess_selector 3")
+        switcher.get(args[0], self.unknown_state_handler)(args[1])
+        print("RemoteCarEnv - mess_selector 4")
 
     def on_message(self, message):
         print("RemoteCarEnv - on_message")
-        messHandler, message_data = self.mess_selector(message)
-        messHandler(message_data)
+        # messHandler, message_data = self.mess_selector(message)
+        # print("RemoteCarEnv - on_message ---2")
+        # messHandler(self, message_data)
+        self.mess_selector(message)
+        print("RemoteCarEnv - on_message 2")
 
     def on_error(self, error):
         print("RemoteCarEnv - on_error")
