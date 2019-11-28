@@ -43,6 +43,7 @@ BATCH_SIZE = 16
 VAR_MIN = 0.1
 RENDER = True
 LOAD = False
+DISCRETE_ACTION = False
 
 remoteEnv = RemoteCarEnv()
 STATE_DIM = remoteEnv.state_dim
@@ -241,7 +242,7 @@ def state_selector(arg):
         "stop_step": stop_step_handler,
         "nn_choose_act": nn_choose_act_handler,
         "env_step": env_step_handler,
-        "wait_s_r_done": wait_s_r_done_handler,
+        "wait_step_done": wait_step_done_handler,
         "nn_learn": nn_learn_handler,
         "stop": stop_handler
     } 
@@ -288,7 +289,7 @@ def wait_reset_done_handler():
         return "wait_reset_done"
 
 def start_step_handler():
-    remoteEnv.render()
+    # remoteEnv.render()
     return "nn_choose_act"
 
 def stop_step_handler():
@@ -323,21 +324,21 @@ def nn_choose_act_handler():
 
 def env_step_handler():
     remoteEnv.step(a)
-    return "wait_s_r_done"
+    return "wait_step_done"
 
-def wait_s_r_done_handler():
+def wait_step_done_handler():
     global s_
     global r
     global done
-    if remoteEnv.s_r_done:
-        remoteEnv.s_r_done = False
+    if remoteEnv.step_done:
+        remoteEnv.step_done = False
         s_ = remoteEnv.env_state
         r = remoteEnv.env_reward
         done = remoteEnv.env_done
         M.store_transition(s, a, r, s_)
         return "nn_learn"
     else :
-        return "wait_s_r_done"
+        return "wait_step_done"
 
 
 def nn_learn_handler():

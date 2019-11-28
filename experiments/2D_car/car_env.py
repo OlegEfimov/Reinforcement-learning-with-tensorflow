@@ -50,7 +50,7 @@ class CarEnv(object):
         return self.reset()
 
     def stop(self):
-        print("CarEnv - stop")
+        print("CarEnv - stop !!!but do nothing yet")
 
     def step(self, action):
         print("CarEnv - step")
@@ -242,79 +242,79 @@ class Viewer(pyglet.window.Window):
 #             if done:
 #                 break
 ##################
-import asyncio
-import websockets
+# import asyncio
+# import websockets
 
-websocket = 0
+# websocket = 0
 
-def mess_selector(arg): 
-    switcher = { 
-        "reset": reset_handler,
-        "wait_reset": wait_reset_handler,
-        "start_step": start_step_handler,
-        "stop_step": stop_step_handler,
-        "nn_choose_act": nn_choose_act_handler,
-        "env_step": env_step_handler,
-        "wait_s_r_done": wait_s_r_done_handler,
-        "nn_learn": nn_learn_handler,
-        "stop": stop_handler
-    } 
-    return switcher.get(arg, unknown_state_handler)
+# def mess_selector(arg): 
+#     switcher = { 
+#         "reset": reset_handler,
+#         "wait_reset": wait_reset_handler,
+#         "start_step": start_step_handler,
+#         "stop_step": stop_step_handler,
+#         "nn_choose_act": nn_choose_act_handler,
+#         "env_step": env_step_handler,
+#         "wait_s_r_done": wait_s_r_done_handler,
+#         "nn_learn": nn_learn_handler,
+#         "stop": stop_handler
+#     } 
+#     return switcher.get(arg, unknown_state_handler)
 
-async def reset_handler():
-    global s
-    global websocket
-    s = env.reset()
-    message = "reset_done"
-    print("reset_handler websocket.send(reset_done)")
-    await websocket.send(message)
+# async def reset_handler():
+#     global s
+#     global websocket
+#     s = env.reset()
+#     message = "reset_done"
+#     print("reset_handler websocket.send(reset_done)")
+#     await websocket.send(message)
 
-async def wait_reset_handler():
-    print("wait_reset_handler()")
+# async def wait_reset_handler():
+#     print("wait_reset_handler()")
 
-async def start_step_handler():
-    print("start_step_handler()")
+# async def start_step_handler():
+#     print("start_step_handler()")
 
-async def stop_step_handler():
-    print("stop_step_handler()")
+# async def stop_step_handler():
+#     print("stop_step_handler()")
 
-async def nn_choose_act_handler():
-    print("nn_choose_act_handler()")
+# async def nn_choose_act_handler():
+#     print("nn_choose_act_handler()")
 
-async def env_step_handler():
-    print("env_step_handler()")
+# async def env_step_handler():
+#     print("env_step_handler()")
 
-async def wait_s_r_done_handler():
-    print("wait_s_r_done_handler()")
+# async def wait_s_r_done_handler():
+#     print("wait_s_r_done_handler()")
 
-async def nn_learn_handler():
-    print("nn_learn_handler()")
+# async def nn_learn_handler():
+#     print("nn_learn_handler()")
 
-async def stop_handler():
-    print("stop_handler()")
+# async def stop_handler():
+#     print("stop_handler()")
 
-async def unknown_state_handler():
-    print("unknown_state_handler()")
+# async def unknown_state_handler():
+#     print("unknown_state_handler()")
 
 
-async def mess_handler(ws, path):
-    global websocket
-    websocket = ws
-    async for message in websocket:
-        print("--------for message in websocket")
-        messHandler = mess_selector(message)
-        await messHandler()
+# async def mess_handler(ws, path):
+#     global websocket
+#     websocket = ws
+#     async for message in websocket:
+#         print("--------for message in websocket")
+#         messHandler = mess_selector(message)
+#         await messHandler()
 
-if __name__ == '__main__':
-    np.random.seed(1)
-    env = CarEnv()
-    env.set_fps(30)
-    s = env.reset()
-    # env.render()
-    # s, r, done = env.step(env.sample_action())
+# if __name__ == '__main__':
+#     np.random.seed(1)
+#     env = CarEnv()
+#     env.set_fps(30)
+#     s = env.reset()
+#     # env.render()
+#     # s, r, done = env.step(env.sample_action())
 
-    start_server = websockets.serve(mess_handler, "localhost", 9001)
+#     start_server = websockets.serve(mess_handler, "localhost", 9001)
 
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+#     asyncio.get_event_loop().run_until_complete(start_server)
+#     asyncio.get_event_loop().run_forever()
 
