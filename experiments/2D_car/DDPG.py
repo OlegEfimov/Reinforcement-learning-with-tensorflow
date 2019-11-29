@@ -24,31 +24,42 @@ import shutil
 from remote_car_env import RemoteCarEnv
 import asyncio
 
+#Friquently changed constants
+MAX_EPISODES = 500
+MAX_EP_STEPS = 600
+MEMORY_CAPACITY = 2000
+
+#Train constants
+NEED_SAVE = True
+LOAD = False
+
+#Eval constants
+# NEED_SAVE = False
+# LOAD = True
+
+#Manual end train loop
+END_TRAIN_LOOP = False
+
+
 TRAIN_LOOP = {"state": "start"}
 USERS = set()
-
-
 
 np.random.seed(1)
 tf.set_random_seed(1)
 
 # MAX_EPISODES = 500
 # MAX_EP_STEPS = 600
-MAX_EPISODES = 200
-MAX_EP_STEPS = 6000
+# MAX_EP_STEPS = 6000
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
 REPLACE_ITER_A = 800
 REPLACE_ITER_C = 700
-MEMORY_CAPACITY = 2000
-# MEMORY_CAPACITY = 1000
+# MEMORY_CAPACITY = 2000
 BATCH_SIZE = 16
 VAR_INITIAL = 2.0
 VAR_MIN = 0.1
 RENDER = True
-# LOAD = False
-LOAD = True
 DISCRETE_ACTION = False
 
 remoteEnv = RemoteCarEnv()
@@ -88,10 +99,10 @@ class Actor(object):
         with tf.variable_scope(scope):
             init_w = tf.contrib.layers.xavier_initializer()
             init_b = tf.constant_initializer(0.001)
-            net = tf.layers.dense(s, 100, activation=tf.nn.relu,
+            net = tf.layers.dense(s, 60, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l1',
                                   trainable=trainable)
-            net = tf.layers.dense(net, 20, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 40, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
                                   trainable=trainable)
             with tf.variable_scope('a'):
@@ -158,13 +169,22 @@ class Critic(object):
             init_b = tf.constant_initializer(0.01)
 
             with tf.variable_scope('l1'):
-                n_l1 = 100
+                n_l1 = 60
                 w1_s = tf.get_variable('w1_s', [self.s_dim, n_l1], initializer=init_w, trainable=trainable)
                 w1_a = tf.get_variable('w1_a', [self.a_dim, n_l1], initializer=init_w, trainable=trainable)
                 b1 = tf.get_variable('b1', [1, n_l1], initializer=init_b, trainable=trainable)
                 net = tf.nn.relu6(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
-            net = tf.layers.dense(net, 20, activation=tf.nn.relu,
+            net = tf.layers.dense(net, 80, activation=tf.nn.relu,
                                   kernel_initializer=init_w, bias_initializer=init_b, name='l2',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 70, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l3',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 60, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l4',
+                                  trainable=trainable)
+            net = tf.layers.dense(net, 50, activation=tf.nn.relu,
+                                  kernel_initializer=init_w, bias_initializer=init_b, name='l5',
                                   trainable=trainable)
             with tf.variable_scope('q'):
                 q = tf.layers.dense(net, 1, kernel_initializer=init_w, bias_initializer=init_b, trainable=trainable)   # Q(s,a)
@@ -312,7 +332,7 @@ async def stop_step_handler():
     # print("---------------------------------step_counter = %s" % str(step_counter))
     step_counter += 1
     if done or step_counter >= MAX_EP_STEPS:
-        print("stop_episode / step_counter = %s" % str(step_counter))
+        print("episode = %d step = %d" %(ep_counter, step_counter))
         return "stop_episode"
     else :
         return "start_step"
@@ -374,6 +394,8 @@ async def nn_learn_handler():
     global s
     global critic
     global actor
+    if (M.pointer%100 == 0):
+        print("M.pointer =  %d" % M.pointer)
 
     if (LOAD != True) & (M.pointer > MEMORY_CAPACITY):
         var = max([var*.9995, VAR_MIN])    # decay the action randomness
@@ -392,20 +414,19 @@ async def nn_learn_handler():
 
 async def train_loop():
     # print("DDPG - train_loop")
-    while TRAIN_LOOP["state"] != "end":
+    while (TRAIN_LOOP["state"] != "end") & (END_TRAIN_LOOP == False):
         state = TRAIN_LOOP["state"]
         stateHandler = state_selector(state)
         new_state = await stateHandler()
         TRAIN_LOOP["state"] = new_state
         # print("%s\t->\t %s" % (state, new_state))
 
-    if LOAD != True:
+    if NEED_SAVE:
         if os.path.isdir(path): shutil.rmtree(path)
         os.mkdir(path)
         ckpt_path = os.path.join(path, 'DDPG.ckpt')
         save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
         print("\nSave Model %s\n" % save_path)
-
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(train_loop())
