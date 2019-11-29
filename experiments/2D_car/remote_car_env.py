@@ -24,6 +24,7 @@ class RemoteCarEnv(object):
     init_done = False
     reset_done = False
     step_done = False
+    stop_done = False
     sample_action = None
     env_state = None
     env_reward = None
@@ -31,7 +32,7 @@ class RemoteCarEnv(object):
     init_done_handler0 = None
     reset_done_handler0 = None
     step_done_handler0 = None
-    # stop_handler0 = None
+    stop_done_handler0 = None
 
 
 
@@ -45,7 +46,7 @@ class RemoteCarEnv(object):
         self.init_done_handler0 = self.init_done_handler
         self.reset_done_handler0 = self.reset_done_handler
         self.step_done_handler0 = self.step_done_handler
-        # self.stop_handler0 = self.stop_handler
+        self.stop_done_handler0 = self.stop_done_handler
 
 
         wst = threading.Thread(target=self.ws.run_forever)
@@ -108,14 +109,14 @@ class RemoteCarEnv(object):
 
     def stop(self):
         print("RemoteCarEnv - stop")
-        self.ws.close()
+        self.stop_done = False
+        self.ws.send("stop:0")
+        # self.ws.close()
 
-        # arr_str = np.array(arg_data_str)
-        # arr_float = arr_str.astype(np.float)
-        # self.env_state = arr_float[:state_dim]
-        # self.env_reward = arr_float[state_dim]
-        # self.env_done = arr_float[-1]
-        # self.step_done = True
+    def stop_done_handler(self, arg_str):
+        # print("RemoteCarEnv - stop_done_handler")
+        self.stop_done = True
+        self.ws.close()
 
     def unknown_state_handler(self, arg_str):
         print("RemoteCarEnv - unknown_state_handler")
@@ -127,8 +128,8 @@ class RemoteCarEnv(object):
             # "init_done": tmp_init_done_handler
             "init_done": self.init_done_handler0,
             "reset_done": self.reset_done_handler0,
-            "step_done": self.step_done_handler0
-            # "stop": self.stop_handler0
+            "step_done": self.step_done_handler0,
+            "stop": self.stop_done_handler0
         }
         # print("RemoteCarEnv - mess_selector 2")
         tmp555 = switcher.get(args[0], self.unknown_state_handler)

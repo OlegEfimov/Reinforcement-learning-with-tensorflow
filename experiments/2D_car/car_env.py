@@ -51,6 +51,7 @@ class CarEnv(object):
 
     def stop(self):
         print("CarEnv - stop !!!but do nothing yet")
+        return self.reset()
 
     def step(self, action):
         # print("CarEnv - step")

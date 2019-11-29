@@ -267,7 +267,8 @@ def state_selector(arg):
         "env_step": env_step_handler,
         "wait_step_done": wait_step_done_handler,
         "nn_learn": nn_learn_handler,
-        "stop": stop_handler
+        "stop": stop_handler,
+        "wait_stop_done": wait_stop_done_handler,
     } 
     return switcher.get(arg, unknown_state_handler)
 
@@ -345,7 +346,17 @@ async def stop_episode_handler():
 
 async def stop_handler():
     # print("DDPG - stop_handler")
-    return "end"
+    remoteEnv.stop()
+    return "wait_stop_done"
+
+async def wait_stop_done_handler():
+    # print("DDPG - wait_stop_done_handler")
+    if remoteEnv.stop_done:
+        remoteEnv.stop_done = False
+        return "end"
+    else :
+        return "wait_stop_done"
+
 
 async def unknown_state_handler():
     # print("DDPG - unknown_state_handler")
@@ -419,7 +430,6 @@ async def train_loop():
         TRAIN_LOOP["state"] = new_state
         # print("%s\t->\t %s" % (state, new_state))
 
-    remoteEnv.stop()
     if NEED_SAVE:
         if os.path.isdir(path): shutil.rmtree(path)
         os.mkdir(path)
