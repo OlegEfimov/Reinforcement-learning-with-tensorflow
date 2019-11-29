@@ -32,7 +32,7 @@ USERS = set()
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 500
+MAX_EPISODES = 200
 MAX_EP_STEPS = 600
 # MAX_EPISODES = 50
 # MAX_EP_STEPS = 600
@@ -47,7 +47,8 @@ BATCH_SIZE = 16
 VAR_INITIAL = 2.0
 VAR_MIN = 0.1
 RENDER = True
-LOAD = False
+# LOAD = False
+LOAD = True
 DISCRETE_ACTION = False
 
 remoteEnv = RemoteCarEnv()
@@ -215,10 +216,11 @@ path = './discrete' if DISCRETE_ACTION else './continuous'
 
 if LOAD:
     saver.restore(sess, tf.train.latest_checkpoint(path))
+    var = VAR_MIN  # control exploration
 else:
     sess.run(tf.global_variables_initializer())
+    var = VAR_INITIAL  # control exploration
 
-var = VAR_INITIAL  # control exploration
 ep_counter = 0
 step_counter = 0
 s_ = None
@@ -372,7 +374,7 @@ async def nn_learn_handler():
     global critic
     global actor
 
-    if M.pointer > MEMORY_CAPACITY:
+    if (LOAD != True) & (M.pointer > MEMORY_CAPACITY):
         var = max([var*.9995, VAR_MIN])    # decay the action randomness
         b_M = M.sample(BATCH_SIZE)
         b_s = b_M[:, :STATE_DIM]
@@ -396,11 +398,12 @@ async def train_loop():
         TRAIN_LOOP["state"] = new_state
         # print("%s\t->\t %s" % (state, new_state))
 
-    if os.path.isdir(path): shutil.rmtree(path)
-    os.mkdir(path)
-    ckpt_path = os.path.join(path, 'DDPG.ckpt')
-    save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
-    print("\nSave Model %s\n" % save_path)
+    if LOAD != True:
+        if os.path.isdir(path): shutil.rmtree(path)
+        os.mkdir(path)
+        ckpt_path = os.path.join(path, 'DDPG.ckpt')
+        save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
+        print("\nSave Model %s\n" % save_path)
 
 
 if __name__ == '__main__':
