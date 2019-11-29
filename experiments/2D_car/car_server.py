@@ -11,7 +11,7 @@ async def init_handler(websocket, arg_str):
     message = "init_done:"
     for num in s:
         message += str(num) + ','
-    print("send %s" % str(message[:-1]))
+    # print("send %s" % str(message[:-1]))
     await websocket.send(message[:-1])
 
 async def reset_handler(websocket, arg_str):
@@ -20,7 +20,7 @@ async def reset_handler(websocket, arg_str):
     message = "reset_done:"
     for num in s:
         message += str(num) + ','
-    print("send %s" % str(message[:-1]))
+    # print("send %s" % str(message[:-1]))
     await websocket.send(message[:-1])
 
 async def step_handler(websocket, arg_str):
@@ -35,11 +35,11 @@ async def step_handler(websocket, arg_str):
         message += str(num) + ','
     message += str(r) + ','
     message += str(terminal)
-    print("send %s" % str(message))
+    # print("send %s" % str(message))
     await websocket.send(message)
 
 async def stop_handler():
-    print("--------stop_handler")
+    # print("--------stop_handler")
     env.stop()
 
 async def unknown_handler():
@@ -57,7 +57,7 @@ def command_selector(message):
 
 async def mess_handler(websocket, path):
     async for message in websocket:
-        print("--------for message in websocket")
+        # print("--------for message in websocket")
         cmdHandler, message_data = command_selector(message)
         await cmdHandler(websocket, message_data)
 

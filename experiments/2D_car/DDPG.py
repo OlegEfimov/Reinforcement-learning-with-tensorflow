@@ -34,13 +34,17 @@ tf.set_random_seed(1)
 
 MAX_EPISODES = 500
 MAX_EP_STEPS = 600
+# MAX_EPISODES = 50
+# MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
 REPLACE_ITER_A = 800
 REPLACE_ITER_C = 700
 MEMORY_CAPACITY = 2000
+# MEMORY_CAPACITY = 1000
 BATCH_SIZE = 16
+VAR_INITIAL = 2.0
 VAR_MIN = 0.1
 RENDER = True
 LOAD = False
@@ -214,7 +218,7 @@ if LOAD:
 else:
     sess.run(tf.global_variables_initializer())
 
-var = 2.  # control exploration
+var = VAR_INITIAL  # control exploration
 ep_counter = 0
 step_counter = 0
 s_ = None
@@ -250,7 +254,7 @@ def state_selector(arg):
     return switcher.get(arg, unknown_state_handler)
 
 async def start_handler():
-    print("DDPG - start_handler")
+    # print("DDPG - start_handler")
     remoteEnv.init()
     return "wait_init_done"
 
@@ -262,7 +266,7 @@ async def wait_init_done_handler():
     global done
     global a
     if remoteEnv.init_done:
-        print("DDPG - wait_init_done_handler - init_done == True!!!")
+        # print("DDPG - wait_init_done_handler - init_done == True!!!")
         remoteEnv.init_done = False
         s_ = remoteEnv.env_state
         r = remoteEnv.env_reward
@@ -273,20 +277,20 @@ async def wait_init_done_handler():
         return "wait_init_done"
 
 async def start_episode_handler():
-    print("DDPG - start_episode_handler")
+    # print("DDPG - start_episode_handler")
     global ep_counter
     ep_counter = 0
     return "send_reset"
 
 async def send_reset_handler():
-    print("DDPG - send_reset_handler")
+    # print("DDPG - send_reset_handler")
     global step_counter
     step_counter = 0
     remoteEnv.reset()
     return "wait_reset_done"
 
 async def wait_reset_done_handler():
-    print("DDPG - wait_reset_done_handler")
+    # print("DDPG - wait_reset_done_handler")
     global s
     if remoteEnv.reset_done:
         remoteEnv.reset_done = False
@@ -296,12 +300,12 @@ async def wait_reset_done_handler():
         return "wait_reset_done"
 
 async def start_step_handler():
-    print("DDPG - start_step_handler")
+    # print("DDPG - start_step_handler")
     # remoteEnv.render()
     return "nn_choose_act"
 
 async def stop_step_handler():
-    print("DDPG - stop_step_handler")
+    # print("DDPG - stop_step_handler")
     global step_counter
     # print("---------------------------------step_counter = %s" % str(step_counter))
     step_counter += 1
@@ -311,7 +315,7 @@ async def stop_step_handler():
         return "start_step"
 
 async def stop_episode_handler():
-    print("DDPG - stop_episode_handler")
+    # print("DDPG - stop_episode_handler")
     global ep_counter
     # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ep_counter = %s" % str(ep_counter))
     ep_counter += 1
@@ -321,22 +325,22 @@ async def stop_episode_handler():
         return "stop"
 
 async def stop_handler():
-    print("DDPG - stop_handler")
+    # print("DDPG - stop_handler")
     return "end"
 
 async def unknown_state_handler():
-    print("DDPG - unknown_state_handler")
+    # print("DDPG - unknown_state_handler")
     return "end"
 
 async def nn_choose_act_handler():
-    print("DDPG - nn_choose_act_handler")
+    # print("DDPG - nn_choose_act_handler")
     global a
     a = actor.choose_action(s)
     a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
     return "env_step"
 
 async def env_step_handler():
-    print("DDPG - env_step_handler")
+    # print("DDPG - env_step_handler")
     remoteEnv.step(a)
     return "wait_step_done"
 
@@ -357,7 +361,7 @@ async def wait_step_done_handler():
 
 
 async def nn_learn_handler():
-    print("DDPG - nn_learn_handler")
+    # print("DDPG - nn_learn_handler")
     global var
     global b_M
     global b_s
@@ -384,13 +388,20 @@ async def nn_learn_handler():
 
 
 async def train_loop():
-    print("DDPG - train_loop")
+    # print("DDPG - train_loop")
     while TRAIN_LOOP["state"] != "end":
         state = TRAIN_LOOP["state"]
         stateHandler = state_selector(state)
         new_state = await stateHandler()
         TRAIN_LOOP["state"] = new_state
         # print("%s\t->\t %s" % (state, new_state))
+
+    if os.path.isdir(path): shutil.rmtree(path)
+    os.mkdir(path)
+    ckpt_path = os.path.join(path, 'DDPG.ckpt')
+    save_path = saver.save(sess, ckpt_path, write_meta_graph=False)
+    print("\nSave Model %s\n" % save_path)
+
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(train_loop())

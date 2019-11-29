@@ -54,13 +54,13 @@ class RemoteCarEnv(object):
         # self.ws.run_forever
 
     def init(self):
-        print("RemoteCarEnv - init")
+        # print("RemoteCarEnv - init")
         self.init_done = False
-        print("send init")
+        # print("send init")
         self.ws.send("init:0")
 
     def init_done_handler(self, arg_str):
-        print("RemoteCarEnv - init_done_handler")
+        # print("RemoteCarEnv - init_done_handler")
         arg_data_str = arg_str.split(',')
         arr_str = np.array(arg_data_str)
         arr_float = arr_str.astype(np.float)
@@ -68,13 +68,13 @@ class RemoteCarEnv(object):
         self.init_done = True
 
     def reset(self):
-        print("RemoteCarEnv - reset")
+        # print("RemoteCarEnv - reset")
         self.reset_done = False
-        print("send reset")
+        # print("send reset")
         self.ws.send("reset:0")
 
     def reset_done_handler(self, arg_str):
-        print("RemoteCarEnv - reset_done_handler")
+        # print("RemoteCarEnv - reset_done_handler")
         arg_data_str = arg_str.split(',')
         arr_str = np.array(arg_data_str)
         arr_float = arr_str.astype(np.float)
@@ -82,16 +82,16 @@ class RemoteCarEnv(object):
         self.reset_done = True
 
     def step(self, action):
-        print("RemoteCarEnv - step")
+        # print("RemoteCarEnv - step")
         self.step_done = False
         message = "step:"
         for num in action:
             message += str(num) + ','
-        print("send %s" % str(message[:-1]))
+        # print("send %s" % str(message[:-1]))
         self.ws.send(message[:-1])
 
     def step_done_handler(self, arg_str):
-        print("RemoteCarEnv - step_done_handler")
+        # print("RemoteCarEnv - step_done_handler")
         arg_data_str = arg_str.split(',')
 
         state_str0 = arg_data_str[:self.state_dim]
@@ -118,7 +118,7 @@ class RemoteCarEnv(object):
         print("RemoteCarEnv - unknown_state_handler")
 
     def mess_selector(self, message):
-        print("RemoteCarEnv - mess_selector")
+        # print("RemoteCarEnv - mess_selector")
         args = message.split(':')
         switcher = { 
             # "init_done": tmp_init_done_handler
@@ -127,19 +127,19 @@ class RemoteCarEnv(object):
             "step_done": self.step_done_handler0
             # "stop": self.stop_handler0
         }
-        print("RemoteCarEnv - mess_selector 2")
+        # print("RemoteCarEnv - mess_selector 2")
         tmp555 = switcher.get(args[0], self.unknown_state_handler)
-        print("RemoteCarEnv - mess_selector 3")
+        # print("RemoteCarEnv - mess_selector 3")
         switcher.get(args[0], self.unknown_state_handler)(args[1])
-        print("RemoteCarEnv - mess_selector 4")
+        # print("RemoteCarEnv - mess_selector 4")
 
     def on_message(self, message):
-        print("RemoteCarEnv - on_message")
+        # print("RemoteCarEnv - on_message")
         # messHandler, message_data = self.mess_selector(message)
         # print("RemoteCarEnv - on_message ---2")
         # messHandler(self, message_data)
         self.mess_selector(message)
-        print("RemoteCarEnv - on_message 2")
+        # print("RemoteCarEnv - on_message 2")
 
     def on_error(self, error):
         print("RemoteCarEnv - on_error")

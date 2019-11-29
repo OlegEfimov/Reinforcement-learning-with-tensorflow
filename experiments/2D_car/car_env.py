@@ -43,7 +43,7 @@ class CarEnv(object):
         self.init()
 
     def init(self):
-        print("CarEnv - init")
+        # print("CarEnv - init")
         self.terminal = False
         self.car_info = np.array([0, 0, 0, 20, 40], dtype=np.float64)   # car coordination
         self.sensor_info = self.sensor_max + np.zeros((self.n_sensor, 3))  # n sensors, (distance, end_x, end_y)
@@ -53,7 +53,7 @@ class CarEnv(object):
         print("CarEnv - stop !!!but do nothing yet")
 
     def step(self, action):
-        print("CarEnv - step")
+        # print("CarEnv - step")
         if self.is_discrete_action:
             action = self.actions[action]
         else:
@@ -68,7 +68,7 @@ class CarEnv(object):
         return s, r, self.terminal
 
     def reset(self):
-        print("CarEnv - reset")
+        # print("CarEnv - reset")
         self.terminal = False
         self.car_info[:3] = np.array([*self.start_point, -np.pi/2])
         self._update_sensor()
