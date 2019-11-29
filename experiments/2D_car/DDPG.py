@@ -25,8 +25,8 @@ from remote_car_env import RemoteCarEnv
 import asyncio
 
 #Friquently changed constants
-MAX_EPISODES = 10
-MAX_EP_STEPS = 600
+MAX_EPISODES = 3
+MAX_EP_STEPS = 30
 MEMORY_CAPACITY = 2000
 
 #Train constants

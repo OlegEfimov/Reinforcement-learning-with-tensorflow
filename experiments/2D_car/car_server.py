@@ -38,7 +38,7 @@ async def step_handler(websocket, arg_str):
     # print("send %s" % str(message))
     await websocket.send(message)
 
-async def stop_handler():
+async def stop_handler(websocket, arg_str):
     # print("--------stop_handler")
     env.stop()
     message = "stop_done:0"

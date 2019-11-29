@@ -129,10 +129,10 @@ class RemoteCarEnv(object):
             "init_done": self.init_done_handler0,
             "reset_done": self.reset_done_handler0,
             "step_done": self.step_done_handler0,
-            "stop": self.stop_done_handler0
+            "stop_done": self.stop_done_handler0
         }
         # print("RemoteCarEnv - mess_selector 2")
-        tmp555 = switcher.get(args[0], self.unknown_state_handler)
+        # tmp555 = switcher.get(args[0], self.unknown_state_handler)
         # print("RemoteCarEnv - mess_selector 3")
         switcher.get(args[0], self.unknown_state_handler)(args[1])
         # print("RemoteCarEnv - mess_selector 4")
