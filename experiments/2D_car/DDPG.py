@@ -32,10 +32,10 @@ USERS = set()
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 200
-MAX_EP_STEPS = 600
-# MAX_EPISODES = 50
+# MAX_EPISODES = 500
 # MAX_EP_STEPS = 600
+MAX_EPISODES = 200
+MAX_EP_STEPS = 6000
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
 GAMMA = 0.9  # reward discount
@@ -312,6 +312,7 @@ async def stop_step_handler():
     # print("---------------------------------step_counter = %s" % str(step_counter))
     step_counter += 1
     if done or step_counter >= MAX_EP_STEPS:
+        print("stop_episode / step_counter = %s" % str(step_counter))
         return "stop_episode"
     else :
         return "start_step"
