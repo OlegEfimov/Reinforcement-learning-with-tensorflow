@@ -25,17 +25,17 @@ from remote_car_env import RemoteCarEnv
 import asyncio
 
 #Friquently changed constants
-MAX_EPISODES = 3
-MAX_EP_STEPS = 30
+MAX_EPISODES = 500
+MAX_EP_STEPS = 600
 MEMORY_CAPACITY = 2000
 
 #Train constants
-# NEED_SAVE = True
-# LOAD = False
+NEED_SAVE = True
+LOAD = False
 
 #Eval constants
-NEED_SAVE = False
-LOAD = True
+# NEED_SAVE = False
+# LOAD = True
 
 TRAIN_LOOP = {"state": "start"}
 USERS = set()
@@ -421,6 +421,7 @@ async def nn_learn_handler():
 
 async def train_loop():
     # print("DDPG - train_loop")
+    need_do_save = NEED_SAVE
     continue_train_loop = True
     while (TRAIN_LOOP["state"] != "end") & continue_train_loop:
         continue_train_loop = True
@@ -430,7 +431,7 @@ async def train_loop():
         TRAIN_LOOP["state"] = new_state
         # print("%s\t->\t %s" % (state, new_state))
 
-    if NEED_SAVE:
+    if need_do_save:
         if os.path.isdir(path): shutil.rmtree(path)
         os.mkdir(path)
         ckpt_path = os.path.join(path, 'DDPG.ckpt')
