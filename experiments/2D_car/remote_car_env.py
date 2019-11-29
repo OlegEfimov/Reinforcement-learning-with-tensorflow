@@ -106,6 +106,9 @@ class RemoteCarEnv(object):
         self.env_done = ast.literal_eval(step_done_str0)
         self.step_done = True
 
+    def stop(self):
+        print("RemoteCarEnv - stop")
+        self.ws.close()
 
         # arr_str = np.array(arg_data_str)
         # arr_float = arr_str.astype(np.float)
