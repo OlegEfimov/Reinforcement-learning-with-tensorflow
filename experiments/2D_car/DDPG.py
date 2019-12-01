@@ -28,15 +28,15 @@ import websockets
 USERS = set()
 
 
-def new_client(client, server):
-    print("New client connected and was given id %d" % client['id'])
+# def new_client(client, server):
+    # print("New client connected and was given id %d" % client['id'])
     # server.send_message_to_all("Hey all, a new client has joined us")
-    server.send_message(client, "0,0")
+    # server.send_message(client, "0,0")
 
 
 # Called for every client disconnecting
-def client_left(client, server):
-    print("Client(%d) disconnected" % client['id'])
+# def client_left(client, server):
+    # print("Client(%d) disconnected" % client['id'])
 
 
 inputNN = []
@@ -363,7 +363,7 @@ def eval():
 async def notify_clients(message):
     if USERS:  # asyncio.wait doesn't accept an empty list
         mess = message
-        # print("send action: %s" % str(mess))
+        print("send %s" % str(mess))
         await asyncio.wait([user.send(mess) for user in USERS])
 
 async def register(websocket):
@@ -395,9 +395,9 @@ async def counter(websocket, path):
         async for message in websocket:
             tmp = message_received(message)
             if len(tmp) > 2:
-                # print("state: %s" % message)
+                print("receive state: %s" % message)
                 receiveStateCounter += 1
-                print("receiveStateCounter =  %s" % str(receiveStateCounter))
+                # print("receiveStateCounter =  %s" % str(receiveStateCounter))
                 state_input = np.array(tmp, dtype=np.float64)
                 s_ = state_input
                 actionArray = calculateAction(state_input)
@@ -405,16 +405,16 @@ async def counter(websocket, path):
                 for num in actionArray:
                     action_as_string += str(num) + ','
                 sendActionCounter += 1
-                print("sendActionCounter =  %s" % str(sendActionCounter))
+                # print("sendActionCounter =  %s" % str(sendActionCounter))
                 await notify_clients(action_as_string[:-1])
             else:
                 # reward
                 tmp_loss = 0
                 reward = tmp[0]
                 done = tmp[1]
-                # print("reward: %s" % reward)
+                print("receive reward: %s" % reward)
                 receiveRewardCounter += 1
-                print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
+                # print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
                 r = reward
                 M.store_transition(s, actionArray, r, s_)
                 # print("M.pointer: %s" % str(M.pointer))
