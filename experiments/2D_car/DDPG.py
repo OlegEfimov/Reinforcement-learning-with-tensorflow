@@ -25,17 +25,17 @@ from remote_car_env import RemoteCarEnv
 import asyncio
 
 #Friquently changed constants
-MAX_EPISODES = 500
-MAX_EP_STEPS = 600
+MAX_EPISODES = 3
+MAX_EP_STEPS = 10
 MEMORY_CAPACITY = 2000
 
 #Train constants
-NEED_SAVE = True
-LOAD = False
+# NEED_SAVE = True
+# LOAD = False
 
 #Eval constants
-# NEED_SAVE = False
-# LOAD = True
+NEED_SAVE = False
+LOAD = True
 
 TRAIN_LOOP = {"state": "start"}
 USERS = set()
