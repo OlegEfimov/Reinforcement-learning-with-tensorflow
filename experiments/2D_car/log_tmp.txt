@@ -1,0 +1,328 @@
+(base) oleg@home:~/git/Reinforcement-learning-with-tensorflow/experiments/2D_car$ python car_server.py 
+receive init:0
+send init_done:0.4666666666666667,0.6599663291074441,1.0,0.4714045207910317,0.3333333333333333
+receive reset:0
+send reset_done:0.4666666666666667,0.6599663291074441,1.0,0.4714045207910317,0.3333333333333333
+receive step:0.07980558588967776
+send step_done:0.46696154440860055,0.6659489617049938,1.0,0.46712306928602837,0.3330663936643221,0,False
+receive step:-0.20340247148986257
+send step_done:0.46655289342800643,0.6513741991941159,1.0,0.4778453061036859,0.3335141201177427,0,False
+receive step:-0.04768521763949088
+send step_done:0.46599091755815836,0.6473973106107738,1.0,0.48117374869425344,0.33413778862846,0,False
+receive step:-0.0597167169161824
+send step_done:0.46524581601682846,0.6424138305575302,1.0,0.4854914020839095,0.33498830621297776,0,False
+receive step:0.18773635164039176
+send step_done:0.4649634580222579,0.6545920213778066,1.0,0.47598124917471474,0.3350447519848643,0,False
+receive step:-0.2548595702643337
+send step_done:0.4641443822631378,0.6365210997373167,1.0,0.49085215973171187,0.33624563317124234,0,False
+receive step:0.33951815275908087
+send step_done:0.4640670728298925,0.6591473639828577,1.0,0.4730408913645192,0.3359404440874719,0,False
+receive step:-0.14483204541807015
+send step_done:0.46372886380078804,0.6487838857699982,1.0,0.480834070361547,0.3363180695236893,0,False
+receive step:0.06933041856881791
+send step_done:0.46358556622018465,0.653275796949578,1.0,0.47747438764875144,0.33641953611170927,0,False
+receive step:-0.03336563630184897
+send step_done:0.46335865863535713,0.6506905283645494,1.0,0.4794989776838943,0.33666131064780963,0,False
+receive reset:0
+send reset_done:0.4666666666666667,0.6599663291074441,1.0,0.4714045207910317,0.3333333333333333
+receive step:0.06358184322785099
+send step_done:0.466898956918893,0.6647207964335659,1.0,0.4679850721715391,0.3331187764593484,0,False
+receive step:-0.33615085884115337
+send step_done:0.4661271608339347,0.64090480598645,1.0,0.48651919633213925,0.3341988392047877,0,False
+receive step:0.08343559906571696
+send step_done:0.46536840823152487,0.6453468988786932,1.0,0.48303063598987306,0.33478852855421737,0,False
+receive step:0.031764281606598985
+send step_done:0.46479094964011247,0.6466560300846731,1.0,0.48215733804083866,0.335317694295333,0,False
+receive step:0.17090409519232022
+send step_done:0.4647755500795257,0.6582248402319552,1.0,0.4734090999951459,0.3352252535049909,0,False
+receive step:-0.17103090282226346
+send step_done:0.46428848933384104,0.6459485243596736,1.0,0.48288660524656174,0.33582032978199083,0,False
+receive step:0.04858304391761725
+send step_done:0.4638753445973737,0.6486207477737044,1.0,0.48091082102756083,0.336176690862888,0,False
+receive step:-0.04895331513813213
+send step_done:0.46335745792942107,0.6446286161519095,1.0,0.48424519782389497,0.33675187351128805,0,False
+receive step:0.08549275485764021
+send step_done:0.463054812463375,0.6499325080269605,1.0,0.48018430116683497,0.33696816416394865,0,False
+receive step:0.08517627330777951
+send step_done:0.46308661998579453,0.6557825917598158,1.0,0.475830538185097,0.3369140990134765,0,False
+receive reset:0
+send reset_done:0.4666666666666667,0.6599663291074441,1.0,0.4714045207910317,0.3333333333333333
+receive step:-0.19269086819793857
+send step_done:0.46608898061403153,0.6461100304162589,1.0,0.48218293205666884,0.3340739164214464,0,False
+receive step:0.17535282337844688
+send step_done:0.4659343411168979,0.657736453214118,1.0,0.47330139422253237,0.33406697749826786,0,False
+receive step:0.03151760109055626
+send step_done:0.46598358281950386,0.6599802947026758,1.0,0.47167141868379503,0.3340172991283487,0,False
+receive step:-0.031015032157100164
+send step_done:0.4659250263292696,0.6577578584315315,1.0,0.47328953045467376,0.3340762169496894,0,False
+receive step:0.03124855739291954
+send step_done:0.4659751441299566,0.6599845066105758,1.0,0.47167185893806335,0.3340257671069996,0,False
+receive step:-0.14966064678779464
+send step_done:0.46554921829957846,0.649190853898875,1.0,0.47989557315980336,0.33453102567629567,0,False
+receive step:0.01742868545463638
+send step_done:0.46512667263093194,0.649771188155711,1.0,0.4795859327259845,0.33493422137607404,0,False
+receive step:-0.06906804621077894
+send step_done:0.46452791184259196,0.6443300387199581,1.0,0.48412171346769306,0.33562531836244436,0,False
+receive step:0.055521659995848724
+send step_done:0.4640243232616507,0.6473239920419535,1.0,0.48187780755241877,0.33605137964808895,0,False
+receive step:0.10503263456968881
+send step_done:0.4638902630440734,0.654235811062464,1.0,0.47664963694467777,0.3361127785911274,0,False
+receive stop:0
+CarEnv - stop !!!but do nothing yet
+send stop_done:0
+==============================================================================
+ sendReward data=0,0
+ receive step:-----------------------loss:0
+ send step_done:0,0.35618273710088866,0.425406220780855,0.297541290717235,0,0
+ receive step:-0.1066878510540953
+ sendReward data=0,0
+ receive step:-----------------------loss:0
+ send step_done:0.10238660912668884,0.450682036231294,0.5096089110283184,0.3976287796804624,0,0
+ receive step:-0.03768188664663105
+ sendReward data=0,0
+ receive step:-----------------------loss:0
+ send step_done:0.2619359128225066,0.5458901711048942,0.5932328535485245,0.4953787962500582,0,0
+ receive step:0.2596793023217435
+ sendReward data=0,0
+ receive step:-----------------------loss:0
+
+=========================================
+old
+/home/oleg/anaconda3/bin/python /home/oleg/pycharm-community-2019.1.3/helpers/pydev/pydevd.py --multiproc --qt-support=auto --client 127.0.0.1 --port 40463 --file /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py
+pydev debugger: process 11095 is connecting
+
+Connected to pydev debugger (build 191.7479.30)
+WARNING: Logging before flag parsing goes to stderr.
+W1202 00:53:11.854567 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:58: The name tf.set_random_seed is deprecated. Please use tf.compat.v1.set_random_seed instead.
+
+W1202 00:53:11.873978 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:83: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+W1202 00:53:11.881770 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:238: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2019-12-02 00:53:11.882508: I tensorflow/core/platform/cpu_feature_guard.cc:145] This TensorFlow binary is optimized with Intel(R) MKL-DNN to use the following CPU instructions in performance critical operations:  SSE4.1 SSE4.2
+To enable them in non-MKL-DNN operations, rebuild TensorFlow with the appropriate compiler flags.
+2019-12-02 00:53:11.906387: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2675500000 Hz
+2019-12-02 00:53:11.907004: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x564c49657cd0 executing computations on platform Host. Devices:
+2019-12-02 00:53:11.907041: I tensorflow/compiler/xla/service/service.cc:175]   StreamExecutor device (0): <undefined>, <undefined>
+OMP: Info #212: KMP_AFFINITY: decoding x2APIC ids.
+OMP: Info #210: KMP_AFFINITY: Affinity capable, using global cpuid leaf 11 info
+OMP: Info #154: KMP_AFFINITY: Initial OS proc set respected: 0-3
+OMP: Info #156: KMP_AFFINITY: 4 available OS procs
+OMP: Info #157: KMP_AFFINITY: Uniform topology
+OMP: Info #179: KMP_AFFINITY: 1 packages x 4 cores/pkg x 1 threads/core (4 total cores)
+OMP: Info #214: KMP_AFFINITY: OS proc to physical thread map:
+OMP: Info #171: KMP_AFFINITY: OS proc 0 maps to package 0 core 0 
+OMP: Info #171: KMP_AFFINITY: OS proc 1 maps to package 0 core 1 
+OMP: Info #171: KMP_AFFINITY: OS proc 2 maps to package 0 core 2 
+OMP: Info #171: KMP_AFFINITY: OS proc 3 maps to package 0 core 3 
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11095 thread 0 bound to OS proc set 0
+2019-12-02 00:53:11.907668: I tensorflow/core/common_runtime/process_util.cc:115] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
+W1202 00:53:11.908347 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:99: The name tf.variable_scope is deprecated. Please use tf.compat.v1.variable_scope instead.
+
+W1202 00:53:14.189577 139704864220992 lazy_loader.py:50] 
+The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+  * https://github.com/tensorflow/io (for I/O related ops)
+If you depend on functionality not listed there, please file an issue.
+
+W1202 00:53:14.190819 139704864220992 deprecation.py:323] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:116: dense (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.dense instead.
+W1202 00:53:15.931561 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:106: The name tf.get_collection is deprecated. Please use tf.compat.v1.get_collection instead.
+
+W1202 00:53:16.657088 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:173: The name tf.train.RMSPropOptimizer is deprecated. Please use tf.compat.v1.train.RMSPropOptimizer instead.
+
+W1202 00:53:17.072489 139704864220992 deprecation.py:506] From /home/oleg/anaconda3/lib/python3.7/site-packages/tensorflow/python/training/rmsprop.py:119: calling Ones.__init__ (from tensorflow.python.ops.init_ops) with dtype is deprecated and will be removed in a future version.
+Instructions for updating:
+Call initializer instance with the dtype argument instead of passing it to the constructor
+W1202 00:53:18.223936 139704864220992 deprecation_wrapper.py:119] From /home/oleg/git/Reinforcement-learning-with-tensorflow/experiments/2D_car/DDPG.py:247: The name tf.train.Saver is deprecated. Please use tf.compat.v1.train.Saver instead.
+
+2019-12-02 00:53:18.691424: W tensorflow/compiler/jit/mark_for_compilation_pass.cc:1412] (One-time warning): Not using XLA:CPU for cluster because envvar TF_XLA_FLAGS=--tf_xla_cpu_global_jit was not set.  If you want XLA:CPU, either set that envvar, or use experimental_jit_scope to enable XLA:CPU.  To confirm that XLA is active, pass --vmodule=xla_compilation_cache=1 (as a proper command-line flag, not via TF_XLA_FLAGS) or set the envvar XLA_FLAGS=--xla_hlo_profile.
+send reset
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11144 thread 1 bound to OS proc set 1
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11180 thread 2 bound to OS proc set 2
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11181 thread 3 bound to OS proc set 3
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11182 thread 4 bound to OS proc set 0
+receive state: 0,0,0,0,0,0
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11143 thread 5 bound to OS proc set 1
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11184 thread 6 bound to OS proc set 2
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11185 thread 7 bound to OS proc set 3
+OMP: Info #250: KMP_AFFINITY: pid 11095 tid 11186 thread 8 bound to OS proc set 0
+send -0.5376462732435825
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -1.0
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.38176541261304864
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.1258471499042023
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -1.0
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.19318913949970506
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.5511075958225127
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.4400911711261831
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.2902456446924139
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.5711998927543098
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.2500852072854369
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.3430258917526638
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.46904667929503163
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.26401577120359576
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.19953872559348593
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.42376478291485703
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.007494261624947924
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.11604588674304883
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.36986011812317054
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.4449764442079154
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.845065338348376
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.31965978545017393
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 1.0
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.30743959268821236
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.17728688541225657
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.175833323371936
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.2921496334256016
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.4643890784862814
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.4414086199698668
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.6252721154511467
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.15020837971685508
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.038947818676025106
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.7587464460456022
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.6994101299095661
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send -0.25339489363872286
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0,0,0,0
+send 0.4369224983926152
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0.009529112254919703,0,0,0
+send -1.0
+receive reward: 0.0
+send loss:0
+receive state: 0,0,0.09539378924013486,0,0,0
+send 0.40157435786856926
+receive reward: 0.0
+send loss:0
+receive state: 0,0.1195342153637714,0.15631478095861961,0,0,0
+send 0.3300462899061974
+receive reward: 0.0
+send loss:0
+receive state: 0,0.17540399357620318,0.25428020992238853,0.08061490395903115,0,0
+send -0.18501727241818477
+receive reward: 0.0
+send loss:0
+receive state: 0,0.25322853639444287,0.3424548420016911,0.21019132738052437,0,0
+send 0.07807652820255498
+receive reward: 0.0
+send loss:0
+receive state: 0,0.35618273710088866,0.425406220780855,0.297541290717235,0,0
+send -0.1066878510540953
+receive reward: 0.0
+send loss:0
+receive state: 0.10238660912668884,0.450682036231294,0.5096089110283184,0.3976287796804624,0,0
+send -0.03768188664663105
+receive reward: 0.0
+send loss:0
+receive state: 0.2619359128225066,0.5458901711048942,0.5932328535485245,0.4953787962500582,0,0
+send 0.2596793023217435
+receive reward: 0.0
+send loss:0
+

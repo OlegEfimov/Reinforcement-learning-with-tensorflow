@@ -156,3 +156,46 @@ class RemoteCarEnv(object):
 
     def on_open(self):
         print("RemoteCarEnv - on_open")
+        # def run(*args):
+        #     self.ws.run_forever()
+        #     print("thread terminating...")
+        #     ws.close()
+
+        # thread.start_new_thread(run, ())
+
+
+    # def main_handler():
+    # recv_data_str = ''
+
+    #     while True:
+    #         env.render()
+    #         done_mess = 0
+    #         if recv_data_str == 'reset':
+    #             s = env.reset()
+    #             r = 0
+    #             done = False
+    #             done_mess = 0
+    #         else:
+    #             # print("--------------env.step(action) action = %s" % str(action))
+    #             s, r, done = env.step(action)
+    #             if done:
+    #                 s = env.reset()
+    #                 done_mess = 1
+    #                 print("---------------env.reset() %s" % str(done))
+
+    #             print("send reward: %s" % str(r))
+    #             mess = str(r) + ',' + str(done_mess)
+    #             await websocket.send(mess)
+
+
+    #         state_as_string = ''
+    #         for num in s:
+    #             state_as_string += str(num) + ','
+    #         print("send state: %s" % str(state_as_string[:-1]))
+    #         await websocket.send(state_as_string[:-1])
+
+    #         action = await websocket.recv()
+    #         recv_data_str = str(action)
+    #         if recv_data_str != 'reset':
+    #             action = np.array([float(action)])
+    #         print("receive action: %s" % recv_data_str)
