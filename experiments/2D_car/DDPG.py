@@ -215,42 +215,47 @@ class Memory(object):
         return self.data[indices, :]
 
 
-sess = tf.Session()
+class DDPG(object):
+    def __init__(self, options):
+        self.capacity = capacity
+        self.data = np.zeros((capacity, dims))
+        self.pointer = 0
 
-# Create actor and critic.
-actor = Actor(sess, ACTION_DIM, ACTION_BOUND[1], LR_A, REPLACE_ITER_A)
-critic = Critic(sess, STATE_DIM, ACTION_DIM, LR_C, GAMMA, REPLACE_ITER_C, actor.a, actor.a_)
-actor.add_grad_to_graph(critic.a_grads)
 
-M = Memory(MEMORY_CAPACITY, dims=2 * STATE_DIM + ACTION_DIM + 1)
+        self.sess = tf.Session()
 
-saver = tf.train.Saver()
-path = './discrete' if DISCRETE_ACTION else './continuous'
+        # Create actor and critic.
+        self.actor = Actor(self.sess, ACTION_DIM, ACTION_BOUND[1], LR_A, REPLACE_ITER_A)
+        self.critic = Critic(self.sess, STATE_DIM, ACTION_DIM, LR_C, GAMMA, REPLACE_ITER_C, self.actor.a, self.actor.a_)
+        self.actor.add_grad_to_graph(self.critic.a_grads)
+
+        self.M = Memory(MEMORY_CAPACITY, dims=2 * STATE_DIM + ACTION_DIM + 1)
+
+        self.saver = tf.train.Saver()
+        self.path = './discrete' if DISCRETE_ACTION else './continuous'
 
 
 # print("step_counter = %s" % str(step_counter))
 
 if LOAD:
-    saver.restore(sess, tf.train.latest_checkpoint(path))
-    var = VAR_MIN  # control exploration
+    self.saver.restore(self.sess, tf.train.latest_checkpoint(self.path))
+    self.var = VAR_MIN  # control exploration
 else:
-    sess.run(tf.global_variables_initializer())
-    var = VAR_INITIAL  # control exploration
+    self.sess.run(tf.global_variables_initializer())
+    self.var = VAR_INITIAL  # control exploration
 
-ep_counter = 0
-step_counter = 0
-s_ = None
-r = None
-done = None
-s = None
-s_ = None
-a = None
-done = False
-b_M = None
-b_s = None
-b_a = None
-b_r = None
-b_s_ = None
+    self.s_ = None
+    self.r = None
+    self.done = None
+    self.s = None
+    self.s_ = None
+    self.a = None
+    self.done = False
+    self.b_M = None
+    self.b_s = None
+    self.b_a = None
+    self.b_r = None
+    self.b_s_ = None
 
 
 def state_selector(arg): 

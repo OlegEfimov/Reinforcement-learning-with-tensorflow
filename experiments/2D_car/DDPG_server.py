@@ -3,6 +3,18 @@ import asyncio
 import websockets
 
 from car_env import CarEnv
+from DDPG import DDPG
+
+n_sensor = 5
+action_dim = 1
+state_dim = n_sensor
+action_bound = [-1, 1]
+
+action_done = False
+sample_action = None
+env_state = None
+env_reward = None
+env_done = None
 
 
 async def init_handler(websocket, arg_str):
@@ -45,25 +57,59 @@ async def stop_handler(websocket, arg_str):
     print("send %s" % str(message))
     await websocket.send(message)
 
-async def unknown_handler():
-    print("--------unknown_handler")
 
-def command_selector(message): 
-    args = message.split(':')
-    switcher = { 
-        "init": init_handler,
-        "reset": reset_handler,
-        "step": step_handler,
-        "stop": stop_handler
-    } 
-    return switcher.get(args[0], unknown_handler), args[1]
+
+
+async def unknown_handler():
+    print("DDPG server: unknown_handler")
+
+
+async def notify_users(websocket, message):
+    if websocket:
+        await asyncio.wait([websocket.send(message)])
+
+async def register(websocket):
+    # TBD
+    await notify_client(websocket, 'register_done')
+
+async def unregister(websocket):
+    # TBD
+    await notify_client(websocket,'unregister_done')
+
+async def action_done_handler(websocket, arg_str):
+    arg_data_str = arg_str.split(',')
+
+    state_str0 = arg_data_str[:state_dim]
+    reward_str0 = arg_data_str[state_dim]
+    action_done_str0 = arg_data_str[-1]
+
+    arr_state_str = np.array(state_str0)
+    arr_state_float = arr_state_str.astype(np.float)
+    env_state = arr_state_float
+    reward_float = float(reward_str0)
+    env_reward = reward_float
+    env_done = ast.literal_eval(action_done_str0)
+
 
 async def mess_handler(websocket, path):
-    async for message in websocket:
-        # print("--------for message in websocket")
-        print("receive %s" % str(message))
-        cmdHandler, message_data = command_selector(message)
-        await cmdHandler(websocket, message_data)
+    await register(websocket)
+    try:
+        async for message in websocket:
+            print("DDPG server receive %s" % str(message))
+            cmdHandler, message_data = mess_selector(message)
+            await cmdHandler(websocket, message_data)
+    finally:
+        await unregister(websocket)
+
+def mess_selector(message):
+    args = message.split(':')
+    switcher = { 
+        # "init_done": init_done_handler,
+        # "reset_done": reset_done_handler,
+        "action_done": action_done_handler,
+        # "stop_done": stop_done_handler
+    }
+    return switcher.get(args[0], unknown_handler), args[1]
 
 if __name__ == '__main__':
 # DDPG initialization
@@ -72,3 +118,6 @@ if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 
+
+
+# =========================================================
