@@ -2,7 +2,6 @@ import numpy as np
 import asyncio
 import websockets
 
-from car_env import CarEnv
 from DDPG import DDPG
 
 n_sensor = 5
@@ -16,6 +15,7 @@ env_state = None
 env_reward = None
 env_done = None
 
+brain = DDPG()
 
 async def init_handler(websocket, arg_str):
     s = env.init()
@@ -64,7 +64,7 @@ async def unknown_handler():
     print("DDPG server: unknown_handler")
 
 
-async def notify_users(websocket, message):
+async def notify_client(websocket, message):
     if websocket:
         await asyncio.wait([websocket.send(message)])
 
@@ -76,19 +76,24 @@ async def unregister(websocket):
     # TBD
     await notify_client(websocket,'unregister_done')
 
+async def nn_choose_act():
+    # print("DDPG - nn_choose_act_handler")
+    global a
+    a = actor.choose_action(s)
+    a = np.clip(np.random.normal(a, var), *ACTION_BOUND)    # add randomness to action selection for exploration
+    return "env_step"
+
 async def action_done_handler(websocket, arg_str):
     arg_data_str = arg_str.split(',')
 
     state_str0 = arg_data_str[:state_dim]
     reward_str0 = arg_data_str[state_dim]
-    action_done_str0 = arg_data_str[-1]
 
     arr_state_str = np.array(state_str0)
     arr_state_float = arr_state_str.astype(np.float)
     env_state = arr_state_float
     reward_float = float(reward_str0)
     env_reward = reward_float
-    env_done = ast.literal_eval(action_done_str0)
 
 
 async def mess_handler(websocket, path):
@@ -113,6 +118,7 @@ def mess_selector(message):
 
 if __name__ == '__main__':
 # DDPG initialization
+    brain.init()
 
     start_server = websockets.serve(mess_handler, "localhost", 9001)
     asyncio.get_event_loop().run_until_complete(start_server)

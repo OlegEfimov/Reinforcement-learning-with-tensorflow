@@ -15,6 +15,29 @@ import pyglet
 
 pyglet.clock.set_fps_limit(10000)
 
+import os
+import shutil
+from car_client import CarClient
+import asyncio
+
+#Friquently changed constants
+MAX_EPISODES = 3
+MAX_EP_STEPS = 10
+MEMORY_CAPACITY = 2000
+
+#Train constants
+# NEED_SAVE = True
+# LOAD = False
+
+#Eval constants
+NEED_SAVE = False
+LOAD = True
+
+TRAIN_LOOP = {"state": "start"}
+USERS = set()
+
+RENDER = True
+
 
 class CarEnv(object):
     n_sensor = 5
