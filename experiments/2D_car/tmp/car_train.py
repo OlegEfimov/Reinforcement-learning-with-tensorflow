@@ -26,18 +26,57 @@ TRAIN_LOOP = {"state": "start"}
 
 
 async def start_handler():
-    # print("DDPG - start_handler")
     env.init()
-    return "wait_init_done"
+    return "reset"
 
 async def reset_handler():
-    s = env.reset()
+    state = env.reset()
     env.render()
-    message = "reset_done:"
-    for num in s:
+    message = "action_done:"
+    for num in state:
         message += str(num) + ','
     print("send %s" % str(message[:-1]))
-    await websocket.send(message[:-1])
+    await ws_client.send(message[:-1])
+    return "wait_action"
+
+async def wait_action_handler():
+    if action_ready:
+        return "start_step_with_action"
+    else:
+        return "wait_action"
+
+async def start_step_with_action_handler():
+    step_done = False
+    env.step(action)
+    step_done = True
+    return "wait_step_done"
+
+async def wait_step_done_handler():
+    if step_done:
+        return "get_state"
+    else:
+        return "wait_step_done"
+
+async def get_state_handler():
+    state = env.get_state()
+    return "step_count"
+
+# async def calc_reward_handler():
+#     reward = env.calc_reward()
+#     return "step_count"
+
+async def step_count_handler():
+    if step_count++ < MAX_EP_STEPS:
+        return "send_state"
+    else:
+        return "ep_count"
+
+async def ep_count_handler():
+    if ep_count++ < MAX_EPISODES:
+        return "send_state"
+    else:
+        return "stop"
+
 
 async def step_handler(websocket, arg_str):
     arg_data_str = arg_str.split(',')
@@ -76,25 +115,17 @@ def state_selector(message):
     args = message.split(':')
     switcher = { 
         "start": start_handler, 
-        # "wait_init_done": wait_init_done_handler,
-        "start_episode": start_episode_handler,
-        "stop_episode": stop_episode_handler,
-        # "send_reset": send_reset_handler,
-        # "wait_reset_done": wait_reset_done_handler,
-        "start_step": start_step_handler,
-        "stop_step": stop_step_handler,
-        # "nn_choose_act": nn_choose_act_handler,
-        # "env_step": env_step_handler,
-        # "wait_step_done": wait_step_done_handler,
-        "nn_learn": nn_learn_handler,
-        # "stop": stop_handler,
-        # "wait_stop_done": wait_stop_done_handler,
-
-        "init": init_handler,
-        "init": init_handler,
         "reset": reset_handler,
-        "step": step_handler,
-        "stop": stop_handler
+        # "get_state_reward": get_state_reward_handler,
+        # "send_state_reward": send_state_reward_handler,
+        "wait_action": wait_action_handler,
+        "start_step_with_action": start_step_with_action_handler,
+        "wait_step_done": wait_step_done_handler,
+        "get_state": get_state_handler,
+        "calc_reward": calc_reward_handler,
+        "step_count": step_count_handler,
+        "ep_count": ep_count_handler,
+        "stop": stop_handler,
     } 
     return switcher.get(args[0], unknown_handler), args[1]
 
