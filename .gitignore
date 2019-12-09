@@ -1,0 +1,8 @@
+/.project
+/experiments/2D_car/continuous
+/experiments/2D_car/log_DDPG
+/experiments/2D_car/tmp/.idea
+*__pycache__
+*.vscode
+
+
