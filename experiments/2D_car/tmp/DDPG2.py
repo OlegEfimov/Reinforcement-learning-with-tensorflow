@@ -60,7 +60,7 @@ DISCRETE_ACTION = False
 
 # remoteEnv = RemoteCarEnv()
 STATE_DIM = 5
-ACTION_DIM = 5
+ACTION_DIM = 1
 ACTION_BOUND = [-1, 1]
 
 # all placeholder for tf

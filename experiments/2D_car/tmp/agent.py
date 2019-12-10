@@ -27,6 +27,16 @@ class Agent(object):
         self.state = None
         self.state_ = None
         self.reward = None
+        self.action = None
+        self.var = 2.0
+
+        # all placeholder for tf
+        with tf.name_scope('S'):
+            S = tf.compat.v1.placeholder(tf.float32, shape=[None, self.STATE_DIM], name='s')
+        with tf.name_scope('R'):
+            R = tf.compat.v1.placeholder(tf.float32, [None, 1], name='r')
+        with tf.name_scope('S_'):
+            S_ = tf.compat.v1.placeholder(tf.float32, shape=[None, self.STATE_DIM], name='s_')
 
         self.sess = tf.Session()
         # Create actor and critic.
@@ -35,16 +45,32 @@ class Agent(object):
         self.actor.add_grad_to_graph(self.critic.a_grads)
 
         self.M = Memory(self.MEMORY_CAPACITY, dims=2 * self.STATE_DIM + self.ACTION_DIM + 1)
+        self.sess.run(tf.global_variables_initializer())
+
+    def init(self):
+        print("Agent init()")
+
 
     def handle_new_state(self, arg_str):
+        print("agent-- handle_new_state(arg_str) arg_str=%s", arg_str)
         args_str = arg_str.split(',')
-        state_str = args_str[:state_dim]
-        reward_str = args_str[state_dim]
+        state_str = args_str[:self.STATE_DIM]
+        # reward_str = args_str[self.STATE_DIM]
         arr_state_str = np.array(state_str)
         arr_state_float = arr_state_str.astype(np.float)
         self.state_ = arr_state_float
-        reward_float = float(reward_str)
+        # reward_float = float(reward_str)
+############################
+        distance = np.min(self.state_)
+        terminal = False
+        if distance < 0.2:
+            terminal = True
+        reward_float = -1 if terminal else 0
+
+############################
         self.reward = reward_float
+        if self.state is None:
+            self.state = self.state_
         self.M.store_transition(self.state, self.action, self.reward, self.state_)
         if self.M.pointer > self.MEMORY_CAPACITY:
             self.var = max([self.var*.9995, self.VAR_MIN])    # decay the action randomness
@@ -59,9 +85,9 @@ class Agent(object):
 
         self.state = self.state_
 
-        action = actor.choose_action(self.state_)
+        action = self.actor.choose_action(self.state_)
         # add randomness to action selection for exploration
-        self.action = np.clip(np.random.normal(action, var), *ACTION_BOUND)
+        self.action = np.clip(np.random.normal(action, self.var), *self.ACTION_BOUND)
         return self.action
 
 

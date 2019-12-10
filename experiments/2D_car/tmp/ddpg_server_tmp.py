@@ -16,18 +16,22 @@ async def notify_client(websocket, message):
         await asyncio.wait([websocket.send(message)])
 
 async def register(websocket):
+    print("register")
     # TBD
     await notify_client(websocket, 'register_done')
 
 async def unregister(websocket):
+    print("unregister")
     # TBD
     await notify_client(websocket,'unregister_done')
 
-async def action_done_handler(websocket, arg_str):
+async def state_handler(websocket, arg_str):
+    print("state_handler(arg_str) arg_str=%s", arg_str)
     action = agent.handle_new_state(arg_str)
-    message = "step:"
+    message = "action:"
     for num in action:
         message += str(num) + ','
+    print("ddpg send %s" % str(message[:-1]))
     await websocket.send(message[:-1])
 
 async def mess_handler(websocket, path):
@@ -42,9 +46,10 @@ async def mess_handler(websocket, path):
         await unregister(websocket)
 
 def mess_selector(message):
+    print("mess_selector(message) message=%s", message)
     args = message.split(':')
     switcher = { 
-        "action_done": action_done_handler,
+        "state": state_handler,
     }
     return switcher.get(args[0], unknown_handler), args[1]
 
