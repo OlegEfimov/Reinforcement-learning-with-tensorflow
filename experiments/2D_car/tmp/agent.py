@@ -55,17 +55,17 @@ class Agent(object):
         print("agent-- handle_new_state(arg_str) arg_str=%s", arg_str)
         args_str = arg_str.split(',')
         state_str = args_str[:self.STATE_DIM]
-        # reward_str = args_str[self.STATE_DIM]
+        reward_str = args_str[self.STATE_DIM]
         arr_state_str = np.array(state_str)
         arr_state_float = arr_state_str.astype(np.float)
         self.state_ = arr_state_float
-        # reward_float = float(reward_str)
+        reward_float = float(reward_str)
 ############################
-        distance = np.min(self.state_)
-        terminal = False
-        if distance < 0.2:
-            terminal = True
-        reward_float = -1 if terminal else 0
+        # distance = np.min(self.state_)
+        # terminal = False
+        # if distance < 0.2:
+        #     terminal = True
+        # reward_float = -1 if terminal else 0
 
 ############################
         self.reward = reward_float

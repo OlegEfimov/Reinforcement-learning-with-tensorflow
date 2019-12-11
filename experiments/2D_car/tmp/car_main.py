@@ -7,10 +7,10 @@ from car_env import CarEnv
 from car_wsclient import WsClient
 
 #Friquently changed constants
-MAX_EPISODES = 5
-MAX_EP_STEPS = 50
-# MAX_EPISODES = 500
-# MAX_EP_STEPS = 600
+# MAX_EPISODES = 5
+# MAX_EP_STEPS = 50
+MAX_EPISODES = 500
+MAX_EP_STEPS = 600
 
 MEMORY_CAPACITY = 2000
 
@@ -44,12 +44,21 @@ async def reset_handler():
     print("---reset_handler")
     global ws_client
     global state
+    global reward
+    global terminal
+    global step_count
+    step_count = 0
     state = env.reset()
+    reward = 0.0
+    terminal = False
     env.render()
     return "send_state"
 
 async def send_state_handler():
     # print("---send_state_handler")
+    global terminal
+    # global step_count
+    # step_count += 1
     message = "state:"
     for num in state:
         message += str(num) + ','
@@ -66,20 +75,24 @@ async def send_state_handler():
     # terminal = False
     # if distance < 0.2:
     #     terminal = True
-
-    return "wait_action"
+    # if terminal:
+    #     terminal = False
+    #     return "wait_action"
+    # else:
+    #     return "wait_action"
+    return "step_count"
 
 async def wait_action_handler():
     # print("---wait_action_handler")
     if ws_client.action_ready:
         # print("---wait_action_handler ws_client.action_ready == True!!!!!!!!!!!!!!!!!!!!")
-        return "start_step_with_action"
+        return "step_with_action"
     else:
         # print("---wait_action_handler ws_client.action_ready == FALSE????????????????")
         return "wait_action"
 
-async def start_step_with_action_handler():
-    # print("---start_step_with_action_handler")
+async def step_with_action_handler():
+    # print("---step_with_action_handler")
     # global step_done
     global state
     global reward
@@ -88,7 +101,7 @@ async def start_step_with_action_handler():
     state,reward,terminal = env.step(ws_client.action)
     env.render()
     # step_done = True
-    return "step_count"
+    return "send_state"
     # return "wait_step_done"
 
 # async def wait_step_done_handler():
@@ -98,12 +111,12 @@ async def start_step_with_action_handler():
 #     else:
 #         return "wait_step_done"
 
-async def get_state_handler():
-    # print("---get_state_handler start")
-    # global state
-    # state = env._get_state()
-    # print("---get_state_handler end")
-    return "step_count"
+# async def get_state_handler():
+#     # print("---get_state_handler start")
+#     # global state
+#     # state = env._get_state()
+#     # print("---get_state_handler end")
+#     return "step_count"
 
 # async def calc_reward_handler():
 #     reward = env.calc_reward()
@@ -111,18 +124,14 @@ async def get_state_handler():
 
 async def step_count_handler():
     # print("---step_count_handler")
-    global state
     global step_count
-    global terminal
     step_count += 1
     if step_count > MAX_EP_STEPS or terminal:
         print("-------------------------------step_count %s" % str(step_count))
-        terminal = False
         # state = env.reset()
-        step_count = 0
         return "ep_count"
     else:
-        return "send_state"
+        return "wait_action"
 
 async def ep_count_handler():
     print("---ep_count_handler")
@@ -178,9 +187,9 @@ def state_selector(arg):
         # "get_state_reward": get_state_reward_handler,
         "send_state": send_state_handler,
         "wait_action": wait_action_handler,
-        "start_step_with_action": start_step_with_action_handler,
+        "step_with_action": step_with_action_handler,
         # "wait_step_done": wait_step_done_handler,
-        "get_state": get_state_handler,
+        # "get_state": get_state_handler,
         # "calc_reward": calc_reward_handler,
         "step_count": step_count_handler,
         "ep_count": ep_count_handler,
