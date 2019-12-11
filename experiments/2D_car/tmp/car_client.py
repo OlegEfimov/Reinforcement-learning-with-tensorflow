@@ -59,6 +59,6 @@ class RemoteNnClient(object):
         print("RemoteCarEnv - on_open")
 
     def send(self, message):
-        print("RemoteCarEnv - send start")
+        # print("RemoteCarEnv - send start")
         self.ws.send(message)
-        print("RemoteCarEnv - send finished")
+        # print("RemoteCarEnv - send finished")

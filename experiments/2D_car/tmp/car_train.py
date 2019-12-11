@@ -7,8 +7,8 @@ from car_env import CarEnv
 from car_client import RemoteNnClient
 
 #Friquently changed constants
-MAX_EPISODES = 100
-MAX_EP_STEPS = 500
+MAX_EPISODES = 50
+MAX_EP_STEPS = 600
 # MAX_EPISODES = 500
 # MAX_EP_STEPS = 600
 
@@ -16,11 +16,11 @@ MEMORY_CAPACITY = 2000
 
 #Train constants
 # NEED_SAVE = True
-# LOAD = False
+LOAD = False
 
 #Eval constants
 NEED_SAVE = False
-LOAD = True
+# LOAD = True
 
 TRAIN_LOOP = {"state": "start"}
 
@@ -30,6 +30,7 @@ step_done = False
 ws_client = None
 step_count = 0
 ep_count = 0
+terminal = False
 
 
 
@@ -47,42 +48,53 @@ async def reset_handler():
     return "send_state"
 
 async def send_state_handler():
-    print("---send_state_handler")
+    # print("---send_state_handler")
     message = "state:"
     for num in state:
         message += str(num) + ','
     print("send %s" % str(message[:-1]))
     ws_client.action_ready = False
     ws_client.send(message[:-1])
+
+    # distance = np.min(state)
+    # terminal = False
+    # if distance < 0.2:
+    #     terminal = True
+
     return "wait_action"
 
 async def wait_action_handler():
     # print("---wait_action_handler")
     if ws_client.action_ready:
-        print("---wait_action_handler ws_client.action_ready == True")
+        # print("---wait_action_handler ws_client.action_ready == True")
         return "start_step_with_action"
     else:
         return "wait_action"
 
 async def start_step_with_action_handler():
-    print("---start_step_with_action_handler")
+    global terminal
+    # print("---start_step_with_action_handler")
     global step_done
+    global state
     step_done = False
-    env.step(action)
+    state,reward,terminal = env.step(action)
+    env.render()
     step_done = True
-    return "wait_step_done"
+    return "step_count"
+    # return "wait_step_done"
 
 async def wait_step_done_handler():
-    print("---wait_step_done_handler")
+    # print("---wait_step_done_handler")
     if step_done:
         return "get_state"
     else:
         return "wait_step_done"
 
 async def get_state_handler():
-    print("---get_state_handler")
-    global state
-    state = env._get_state()
+    # print("---get_state_handler start")
+    # global state
+    # state = env._get_state()
+    # print("---get_state_handler end")
     return "step_count"
 
 # async def calc_reward_handler():
@@ -90,14 +102,19 @@ async def get_state_handler():
 #     return "step_count"
 
 async def step_count_handler():
-    print("---step_count_handler")
+    # print("---step_count_handler")
+    global state
     global step_count
+    global terminal
     step_count += 1
-    print("-------------------------------step_count %s" % str(step_count))
-    if step_count < MAX_EP_STEPS:
-        return "send_state"
-    else:
+    if step_count > MAX_EP_STEPS or terminal:
+        print("-------------------------------step_count %s" % str(step_count))
+        terminal = False
+        # state = env.reset()
+        step_count = 0
         return "ep_count"
+    else:
+        return "send_state"
 
 async def ep_count_handler():
     print("---ep_count_handler")
@@ -105,9 +122,9 @@ async def ep_count_handler():
     ep_count += 1
     print("--------------------------------------------------------ep_count %s" % str(ep_count))
     if ep_count < MAX_EPISODES:
-        return "send_state"
+        return "reset"
     else:
-        return "stop"
+        return "end"
 
 
 # async def step_handler(websocket, arg_str):
@@ -125,8 +142,9 @@ async def ep_count_handler():
 #     print("send %s" % str(message))
 #     await websocket.send(message)
 
-async def stop_handler(websocket, arg_str):
+async def stop_handler():
     print("--------stop_handler")
+    ws_client.on_close()
     # env.stop()
     # message = "stop_done:0"
     # print("send %s" % str(message))
@@ -136,13 +154,13 @@ async def unknown_handler():
     print("--------unknown_handler")
 
 
-async def mess_handler(websocket, path):
-    print("---mess_handler")
-    async for message in websocket:
-        # print("--------for message in websocket")
-        print("receive %s" % str(message))
-        cmdHandler, message_data = command_selector(message)
-        await cmdHandler(websocket, message_data)
+# async def mess_handler(websocket, path):
+#     print("---mess_handler")
+#     async for message in websocket:
+#         # print("--------for message in websocket")
+#         print("receive %s" % str(message))
+#         cmdHandler, message_data = command_selector(message)
+#         await cmdHandler(websocket, message_data)
 
 def state_selector(arg):
     # print("---state_selector")

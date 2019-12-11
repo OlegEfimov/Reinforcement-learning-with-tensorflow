@@ -54,7 +54,7 @@ class CarEnv(object):
         return self.reset()
 
     def step(self, action):
-        # print("CarEnv - step")
+        print("CarEnv - step start")
         if self.is_discrete_action:
             action = self.actions[action]
         else:
@@ -66,6 +66,7 @@ class CarEnv(object):
         self._update_sensor()
         s = self._get_state()
         r = -1 if self.terminal else 0
+        print("CarEnv - step end")
         return s, r, self.terminal
 
     def reset(self):
