@@ -4,7 +4,7 @@ import shutil
 import asyncio
 
 from car_env import CarEnv
-from car_client import RemoteNnClient
+from car_wsclient import WsClient
 
 #Friquently changed constants
 MAX_EPISODES = 5
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     env.set_fps(30)
     state = env.reset()
     action = env.sample_action()
-    ws_client = RemoteNnClient()
+    ws_client = WsClient()
 
     asyncio.get_event_loop().run_until_complete(train_loop())
 

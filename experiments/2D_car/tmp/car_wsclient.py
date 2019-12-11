@@ -1,16 +1,9 @@
 import websocket
 import threading
 import numpy as np
-import ast
 
-
-class RemoteNnClient(object):
-    n_sensor = 5
-    action_dim = 1
-    state_dim = n_sensor
-    action_bound = [-1, 1]
+class WsClient(object):
     ws = 0
-
     action_ready = False
     action = None
 
@@ -20,7 +13,6 @@ class RemoteNnClient(object):
                                   on_error = self.on_error,
                                   on_close = self.on_close)
         self.ws.on_open = self.on_open
-
         wst = threading.Thread(target=self.ws.run_forever)
         wst.daemon = True
         wst.start()
@@ -33,32 +25,27 @@ class RemoteNnClient(object):
         self.action_ready = True
 
     def unknown_state_handler(self, arg_str):
-        print("RemoteCarEnv - unknown_state_handler")
+        print("WsClient - unknown_state_handler")
 
-    def mess_selector(self, message):
-        print("RemoteCarEnv mess_selector message=%s" % str(message))
+    def on_message(self, message):
+        print("WsClient on_message %s" % str(message))
         args = message.split(':')
         switcher = { 
             "action": self.action_handler,
         }
         switcher.get(args[0], self.unknown_state_handler)(args[1])
 
-    def on_message(self, message):
-        self.mess_selector(message)
-
     def on_error(self, error):
-        print("RemoteCarEnv - on_error")
+        print("WsClient - on_error")
         print(error)
 
     def on_close(self):
-        print("RemoteCarEnv - on_close")
+        print("WsClient - on_close")
         self.ws.close()
-        print("on_close ... ws.close()")
+        print("WsClient ... ws.close()")
 
     def on_open(self):
-        print("RemoteCarEnv - on_open")
+        print("WsClient - on_open")
 
     def send(self, message):
-        # print("RemoteCarEnv - send start")
         self.ws.send(message)
-        # print("RemoteCarEnv - send finished")

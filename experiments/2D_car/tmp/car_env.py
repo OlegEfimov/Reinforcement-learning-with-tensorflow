@@ -41,7 +41,6 @@ class CarEnv(object):
         self.init()
 
     def init(self):
-        # print("CarEnv - init")
         self.terminal = False
         self.car_info = np.array([0, 0, 0, 20, 40], dtype=np.float64)   # car coordination
         self.sensor_info = self.sensor_max + np.zeros((self.n_sensor, 3))  # n sensors, (distance, end_x, end_y)
