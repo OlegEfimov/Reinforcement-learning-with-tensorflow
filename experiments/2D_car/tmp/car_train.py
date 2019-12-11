@@ -7,8 +7,8 @@ from car_env import CarEnv
 from car_client import RemoteNnClient
 
 #Friquently changed constants
-MAX_EPISODES = 50
-MAX_EP_STEPS = 600
+MAX_EPISODES = 5
+MAX_EP_STEPS = 50
 # MAX_EPISODES = 500
 # MAX_EP_STEPS = 600
 
@@ -26,7 +26,7 @@ TRAIN_LOOP = {"state": "start"}
 
 state = None
 action = None
-step_done = False
+# step_done = False
 ws_client = None
 step_count = 0
 ep_count = 0
@@ -66,29 +66,30 @@ async def send_state_handler():
 async def wait_action_handler():
     # print("---wait_action_handler")
     if ws_client.action_ready:
-        # print("---wait_action_handler ws_client.action_ready == True")
+        # print("---wait_action_handler ws_client.action_ready == True!!!!!!!!!!!!!!!!!!!!")
         return "start_step_with_action"
     else:
+        # print("---wait_action_handler ws_client.action_ready == FALSE????????????????")
         return "wait_action"
 
 async def start_step_with_action_handler():
     global terminal
     # print("---start_step_with_action_handler")
-    global step_done
+    # global step_done
     global state
-    step_done = False
+    # step_done = False
     state,reward,terminal = env.step(action)
     env.render()
-    step_done = True
+    # step_done = True
     return "step_count"
     # return "wait_step_done"
 
-async def wait_step_done_handler():
-    # print("---wait_step_done_handler")
-    if step_done:
-        return "get_state"
-    else:
-        return "wait_step_done"
+# async def wait_step_done_handler():
+#     # print("---wait_step_done_handler")
+#     if step_done:
+#         return "get_state"
+#     else:
+#         return "wait_step_done"
 
 async def get_state_handler():
     # print("---get_state_handler start")
@@ -171,7 +172,7 @@ def state_selector(arg):
         "send_state": send_state_handler,
         "wait_action": wait_action_handler,
         "start_step_with_action": start_step_with_action_handler,
-        "wait_step_done": wait_step_done_handler,
+        # "wait_step_done": wait_step_done_handler,
         "get_state": get_state_handler,
         # "calc_reward": calc_reward_handler,
         "step_count": step_count_handler,

@@ -77,7 +77,7 @@ class Agent(object):
             b_M = self.M.sample(self.BATCH_SIZE)
             b_s = b_M[:, :self.STATE_DIM]
             b_a = b_M[:, self.STATE_DIM: self.STATE_DIM + self.ACTION_DIM]
-            b_r = b_M[:, -self.TATE_DIM - 1: -self.STATE_DIM]
+            b_r = b_M[:, -self.STATE_DIM - 1: -self.STATE_DIM]
             b_s_ = b_M[:, -self.STATE_DIM:]
 
             self.critic.learn(b_s, b_a, b_r, b_s_)
