@@ -23,7 +23,7 @@ async def register(websocket):
 async def unregister(websocket):
     print("unregister")
     # TBD
-    await notify_client(websocket,'unregister_done')
+    # await notify_client(websocket,'unregister_done')
 
 async def state_handler(websocket, arg_str):
     print("state_handler(arg_str) arg_str=%s", arg_str)
