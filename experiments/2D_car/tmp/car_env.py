@@ -53,11 +53,14 @@ class CarEnv(object):
         return self.reset()
 
     def step(self, action):
-        print("CarEnv - step start")
+        # print("CarEnv - step start")
+        # print("CarEnv - step start action_1=%s" % str(action))
+
         if self.is_discrete_action:
             action = self.actions[action]
         else:
             action = np.clip(action, *self.action_bound)[0]
+        # print("CarEnv - step start action_2=%s" % str(action))
         self.car_info[2] += action * np.pi/30  # max r = 6 degree
         self.car_info[:2] = self.car_info[:2] + \
                             self.speed * self.dt * np.array([np.cos(self.car_info[2]), np.sin(self.car_info[2])])
@@ -65,7 +68,7 @@ class CarEnv(object):
         self._update_sensor()
         s = self._get_state()
         r = -1 if self.terminal else 0
-        print("CarEnv - step end")
+        # print("CarEnv - step end")
         return s, r, self.terminal
 
     def reset(self):

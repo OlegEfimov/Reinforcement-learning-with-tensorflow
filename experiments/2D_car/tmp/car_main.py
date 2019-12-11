@@ -25,12 +25,13 @@ NEED_SAVE = False
 TRAIN_LOOP = {"state": "start"}
 
 state = None
+reward = 0
+terminal = False
 action = None
 # step_done = False
 ws_client = None
 step_count = 0
 ep_count = 0
-terminal = False
 
 
 
@@ -52,6 +53,11 @@ async def send_state_handler():
     message = "state:"
     for num in state:
         message += str(num) + ','
+    message += str(reward) + ','
+    if terminal:
+        message += '-1' + ','
+    else:
+        message += '0' + ','
     print("send %s" % str(message[:-1]))
     ws_client.action_ready = False
     ws_client.send(message[:-1])
@@ -73,12 +79,13 @@ async def wait_action_handler():
         return "wait_action"
 
 async def start_step_with_action_handler():
-    global terminal
     # print("---start_step_with_action_handler")
     # global step_done
     global state
+    global reward
+    global terminal
     # step_done = False
-    state,reward,terminal = env.step(action)
+    state,reward,terminal = env.step(ws_client.action)
     env.render()
     # step_done = True
     return "step_count"
