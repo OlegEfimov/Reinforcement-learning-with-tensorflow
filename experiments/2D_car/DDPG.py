@@ -57,7 +57,7 @@ inputNN = []
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 1500
+MAX_EPISODES = 500
 MAX_EP_STEPS = 600
 LR_A = 1e-4  # learning rate for actor
 LR_C = 1e-4  # learning rate for critic
@@ -363,7 +363,7 @@ def eval():
 async def notify_clients(message):
     if USERS:  # asyncio.wait doesn't accept an empty list
         mess = message
-        print("send %s" % str(mess))
+        # print("send %s" % str(mess))
         await asyncio.wait([user.send(mess) for user in USERS])
 
 async def register(websocket):
@@ -395,7 +395,7 @@ async def counter(websocket, path):
         async for message in websocket:
             tmp = message_received(message)
             if len(tmp) > 2:
-                print("receive state: %s" % message)
+                # print("receive state: %s" % message)
                 receiveStateCounter += 1
                 # print("receiveStateCounter =  %s" % str(receiveStateCounter))
                 state_input = np.array(tmp, dtype=np.float64)
@@ -412,7 +412,7 @@ async def counter(websocket, path):
                 tmp_loss = 0
                 reward = tmp[0]
                 done = tmp[1]
-                print("receive reward: %s" % reward)
+                # print("receive reward: %s" % reward)
                 receiveRewardCounter += 1
                 # print("receiveRewardCounter =  %s" % str(receiveRewardCounter))
                 r = reward
