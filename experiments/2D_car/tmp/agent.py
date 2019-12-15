@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import os
+import shutil
 
 from DDPG2 import Actor
 from DDPG2 import Critic
@@ -45,6 +47,9 @@ class Agent(object):
         self.actor.add_grad_to_graph(self.critic.a_grads)
 
         self.M = Memory(self.MEMORY_CAPACITY, dims=2 * self.STATE_DIM + self.ACTION_DIM + 1)
+
+        self.saver = tf.train.Saver()
+        self.path = './discrete' if self.DISCRETE_ACTION else './continuous'
         self.sess.run(tf.global_variables_initializer())
 
     def init(self):
@@ -52,7 +57,7 @@ class Agent(object):
 
 
     def handle_new_state(self, arg_str):
-        print("agent-- handle_new_state(arg_str) arg_str=%s", arg_str)
+        # print("agent-- handle_new_state(arg_str) arg_str=%s", arg_str)
         args_str = arg_str.split(',')
         state_str = args_str[:self.STATE_DIM]
         reward_str = args_str[self.STATE_DIM]
@@ -85,9 +90,23 @@ class Agent(object):
 
         self.state = self.state_
 
+        if self.M.pointer %100 == 0:
+            print("M.pointer=%d", self.M.pointer)
+
         action = self.actor.choose_action(self.state_)
         # add randomness to action selection for exploration
         self.action = np.clip(np.random.normal(action, self.var), *self.ACTION_BOUND)
         return self.action
 
 
+    def handle_save(self, arg_str):
+        if os.path.isdir(self.path): shutil.rmtree(self.path)
+        os.mkdir(self.path)
+        ckpt_path = os.path.join(self.path, 'DDPG.ckpt')
+        save_path = self.saver.save(self.sess, ckpt_path, write_meta_graph=False)
+        print("\nSave Model %s\n" % save_path)
+
+    def handle_load(self, arg_str):
+        self.saver.restore(self.sess, tf.train.latest_checkpoint(self.path))
+        self.var = self.VAR_MIN
+        print("\nLoad Model %s\n" % self.path)

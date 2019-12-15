@@ -7,10 +7,10 @@ from car_env import CarEnv
 from car_wsclient import WsClient
 
 #Friquently changed constants
-# MAX_EPISODES = 5
-# MAX_EP_STEPS = 50
-MAX_EPISODES = 500
-MAX_EP_STEPS = 600
+MAX_EPISODES = 3
+MAX_EP_STEPS = 10
+# MAX_EPISODES = 500
+# MAX_EP_STEPS = 600
 
 #Train constants
 NEED_SAVE = True
@@ -61,7 +61,7 @@ async def send_state_handler():
         message += '-1' + ','
     else:
         message += '0' + ','
-    print("send %s" % str(message[:-1]))
+    print("send  %s" % str(message[:-1]))
     ws_client.action_ready = False
     ws_client.send(message[:-1])
     return "step_count"
