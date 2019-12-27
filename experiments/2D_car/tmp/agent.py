@@ -57,7 +57,7 @@ class Agent(object):
 
 
     def handle_new_state(self, arg_str):
-        # print("agent-- handle_new_state(arg_str) arg_str=%s", arg_str)
+        # print("agent-- handle_new_state(arg_str) arg_str=%s" % arg_str)
         args_str = arg_str.split(',')
         state_str = args_str[:self.STATE_DIM]
         reward_str = args_str[self.STATE_DIM]
@@ -76,6 +76,8 @@ class Agent(object):
         self.reward = reward_float
         if self.state is None:
             self.state = self.state_
+        # print("state_str=%s" % state_str)
+        # print("reward_str=%s" % reward_str)
         self.M.store_transition(self.state, self.action, self.reward, self.state_)
         if self.M.pointer > self.MEMORY_CAPACITY:
             self.var = max([self.var*.9995, self.VAR_MIN])    # decay the action randomness

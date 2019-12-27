@@ -15,9 +15,6 @@ import pyglet
 pyglet.clock.set_fps_limit(10000)
 
 class CarEnv(object):
-    n_sensor = 5
-    action_dim = 1
-    state_dim = n_sensor
     viewer = None
     viewer_xy = (500, 500)
     sensor_max = 150.
@@ -25,12 +22,15 @@ class CarEnv(object):
     speed = 50.
     dt = 0.1
 
-    def __init__(self, discrete_action=False):
-        self.is_discrete_action = discrete_action
-        if discrete_action:
+    def __init__(self, config):
+        self.n_sensor = config.STATE_DIM
+        self.action_dim = config.ACTION_DIM
+        self.state_dim = self.n_sensor
+        self.is_discrete_action = config.DISCRETE_ACTION
+        if self.is_discrete_action:
             self.actions = [-1, 0, 1]
         else:
-            self.action_bound = [-1, 1]
+            self.action_bound = config.ACTION_BOUND
 
         self.obstacle_coords = np.array([
             [120, 120],

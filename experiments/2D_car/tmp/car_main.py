@@ -3,12 +3,13 @@ import os
 import shutil
 import asyncio
 
+from config_env import ConfigEnv
 from car_env import CarEnv
 from car_wsclient import WsClient
 
 #Friquently changed constants
-MAX_EPISODES = 3
-MAX_EP_STEPS = 10
+# MAX_EPISODES = 200
+# MAX_EP_STEPS = 300
 # MAX_EPISODES = 500
 # MAX_EP_STEPS = 600
 
@@ -83,7 +84,7 @@ async def step_with_action_handler():
 async def step_count_handler():
     global step_count
     step_count += 1
-    if step_count > MAX_EP_STEPS or terminal:
+    if step_count > config.MAX_EP_STEPS or terminal:
         print("-------------------------------step_count %s" % str(step_count))
         return "ep_count"
     else:
@@ -93,7 +94,7 @@ async def ep_count_handler():
     global ep_count
     ep_count += 1
     print("--------------------------------------------------------ep_count %s" % str(ep_count))
-    if ep_count < MAX_EPISODES:
+    if ep_count < config.MAX_EPISODES:
         return "reset"
     else:
         return "end"
@@ -132,7 +133,8 @@ async def train_loop():
     print("train_loop end")
 
 if __name__ == '__main__':
-    env = CarEnv()
+    config = ConfigEnv()
+    env = CarEnv(config)
     env.set_fps(30)
     state = env.reset()
     action = env.sample_action()

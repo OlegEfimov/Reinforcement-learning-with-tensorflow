@@ -5,8 +5,8 @@ from config_env import ConfigEnv
 from agent import Agent
 
 
-config_env = ConfigEnv()
-agent = Agent(config_env)
+config = ConfigEnv()
+agent = Agent(config)
 
 async def unknown_handler():
     print("DDPG server: unknown_handler")
