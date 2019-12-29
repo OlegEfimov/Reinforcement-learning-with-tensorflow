@@ -62,7 +62,7 @@ async def send_state_handler():
         message += '-1' + ','
     else:
         message += '0' + ','
-    print("send  %s" % str(message[:-1]))
+    # print("send  %s" % str(message[:-1]))
     ws_client.action_ready = False
     ws_client.send(message[:-1])
     return "step_count"

@@ -26,7 +26,7 @@ async def unregister(websocket):
     # await notify_client(websocket,'unregister_done')
 
 async def state_handler(websocket, arg_str):
-    # print("state_handler(arg_str) arg_str=%s", arg_str)
+    print("state_handler(arg_str) arg_str=%s", arg_str)
     action = agent.handle_new_state(arg_str)
     message = "action:"
     for num in action:
