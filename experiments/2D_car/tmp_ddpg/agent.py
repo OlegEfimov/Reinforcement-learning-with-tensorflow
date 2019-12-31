@@ -4,25 +4,25 @@ from alg_ddpg import DDPG
 class Agent(object):
     def __init__(self, config_env):
         self.env = config_env
-        self.STATE_DIM = self.env.STATE_DIM
+        self.STATE_DIM = (self.env.STATE_DIM,)
         self.ACTION_DIM = self.env.ACTION_DIM
-        self.ACTION_BOUND = self.env.ACTION_BOUND
-        self.state = None
-        self.state_ = None
+        self.ACTION_RANGE = np.array(self.env.ACTION_RANGE)
+        self.old_state = None
+        self.new_state = None
         self.reward = None
         self.action = 0
         self.consecutive_frames = 1
-        self.alg = DDPG(self.ACTION_DIM, self.STATE_DIM, self.consecutive_frames)
+        self.alg = DDPG(self.ACTION_DIM, self.STATE_DIM, self.ACTION_RANGE, self.consecutive_frames)
 
     def init(self):
         print("Agent init()")
 
 
     def handle_new_state(self, arg_str):
-        print("agent-- handle_new_state(arg_str) arg_str=%s" % arg_str)
+        # print("agent-- handle_new_state(arg_str) arg_str=%s" % arg_str)
         args_str = arg_str.split(',')
-        state_str = args_str[:self.STATE_DIM]
-        reward_str = args_str[self.STATE_DIM]
+        state_str = args_str[:self.STATE_DIM[0]]
+        reward_str = args_str[self.STATE_DIM[0]]
         terminal_str = args_str[-1]
         if terminal_str == "0":
             done = False
@@ -49,9 +49,9 @@ class Agent(object):
         self.old_state = self.new_state
 
 
-        action = self.alg.policy_action(self.new_state)
+        self.action = self.alg.policy_action(self.new_state)
 
-        return [self.action]
+        return self.action
 
 
     def handle_save(self, arg_str):

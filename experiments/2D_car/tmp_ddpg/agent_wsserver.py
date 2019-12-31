@@ -26,12 +26,12 @@ async def unregister(websocket):
     # await notify_client(websocket,'unregister_done')
 
 async def state_handler(websocket, arg_str):
-    print("state_handler(arg_str) arg_str=%s", arg_str)
+    print("state_handler(arg_str) arg_str=%s" % arg_str)
     action = agent.handle_new_state(arg_str)
     message = "action:"
     for num in action:
         message += str(num) + ','
-    # print("ddpg send %s" % str(message[:-1]))
+    print("ddpg send %s" % str(message[:-1]))
     await websocket.send(message[:-1])
 
 async def save_handler(websocket, arg_str):

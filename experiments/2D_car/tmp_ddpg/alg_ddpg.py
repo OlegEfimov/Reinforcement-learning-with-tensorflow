@@ -12,7 +12,7 @@ class DDPG:
     """ Deep Deterministic Policy Gradient (DDPG) Helper Class
     """
 
-    def __init__(self, act_dim, env_dim, act_range, k, buffer_size = 20000, gamma = 0.99, lr = 0.00005, tau = 0.001):
+    def __init__(self, act_dim, env_dim, act_range, k, buffer_size = 2000, gamma = 0.99, lr = 0.00005, tau = 0.001):
         """ Initialization
         """
         # Environment and A2C parameters
@@ -21,12 +21,13 @@ class DDPG:
         self.env_dim = (k,) + env_dim
         self.gamma = gamma
         self.lr = lr
-        self.batch_size = 64
+        self.batch_size = 16
         # Create actor and critic networks
         self.actor = Actor(self.env_dim, act_dim, act_range, 0.1 * lr, tau)
         self.critic = Critic(self.env_dim, act_dim, lr, tau)
         self.buffer = MemoryBuffer(buffer_size)
         self.time = 0
+        self.noise = OrnsteinUhlenbeckProcess(size=self.act_dim)
 
     def policy_action(self, s):
         """ Use the actor to predict value
@@ -125,7 +126,7 @@ class DDPG:
         r = arg_reward
         done = arg_done
         # Clip continuous values to be valid w.r.t. environment
-        a = np.clip(a+noise.generate(self.time), -self.act_range, self.act_range)
+        a = np.clip(a+self.noise.generate(self.time), -self.act_range, self.act_range)
 
         # Add outputs to memory buffer
         self.memorize(old_state, a, r, done, new_state)
