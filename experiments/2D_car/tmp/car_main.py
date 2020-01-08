@@ -135,7 +135,7 @@ async def train_loop():
 if __name__ == '__main__':
     config = ConfigEnv()
     env = CarEnv(config)
-    env.set_fps(30)
+    # env.set_fps(30)
     state = env.reset()
     action = env.sample_action()
     ws_client = WsClient()
