@@ -12,7 +12,7 @@ numpy >= 1.12.1
 import numpy as np
 import pyglet
 
-pyglet.clock.set_fps_limit(10000)
+# pyglet.clock.set_fps_limit(10000)
 
 class CarEnv(object):
     viewer = None
@@ -84,8 +84,8 @@ class CarEnv(object):
             a = np.random.uniform(*self.action_bound, size=self.action_dim)
         return a
 
-    def set_fps(self, fps=30):
-        pyglet.clock.set_fps_limit(fps)
+    # def set_fps(self, fps=30):
+        # pyglet.clock.set_fps_limit(fps)
 
     def _get_state(self):
         s = self.sensor_info[:, 0].flatten()/self.sensor_max
@@ -158,7 +158,7 @@ class Viewer(pyglet.window.Window):
     color = {
         'background': [1]*3 + [1]
     }
-    fps_display = pyglet.clock.ClockDisplay()
+    # fps_display = pyglet.clock.ClockDisplay()
     bar_thc = 5
 
     def __init__(self, width, height, car_info, sensor_info, obstacle_coords):
