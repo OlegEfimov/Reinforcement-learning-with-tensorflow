@@ -55,9 +55,9 @@ class Agent(object):
 
 
     def handle_save(self, arg_str):
-        # self.alg.save()
+        self.alg.save(arg_str)
         print("\nSave Model %s\n")
 
     def handle_load(self, arg_str):
-        # self.alg.load()
+        self.alg.load(arg_str, arg_str)
         print("\nLoad Model %s\n")

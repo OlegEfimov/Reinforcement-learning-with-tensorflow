@@ -141,11 +141,13 @@ class DDPG:
         # Update current state
         self.time += 1
 
-    def save_weights(self, path):
+    def save(self, path):
         path += '_LR_{}'.format(self.lr)
         self.actor.save(path)
         self.critic.save(path)
 
-    def load_weights(self, path_actor, path_critic):
-        self.critic.load_weights(path_critic)
-        self.actor.load_weights(path_actor)
+    def load(self, path_actor, path_critic):
+        path_actor += '_LR_{}'.format(self.lr)
+        path_critic += '_LR_{}'.format(self.lr)
+        self.critic.load(path_critic)
+        self.actor.load(path_actor)

@@ -64,5 +64,5 @@ class Critic:
     def save(self, path):
         self.model.save_weights(path + '_critic.h5')
 
-    def load_weights(self, path):
-        self.model.load_weights(path)
+    def load(self, path):
+        self.model.load_weights(path + '_critic.h5')

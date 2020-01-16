@@ -97,11 +97,14 @@ async def ep_count_handler():
     if ep_count < config.MAX_EPISODES:
         return "reset"
     else:
-        return "end"
+        return "stop"
 
 async def stop_handler():
     print("--------stop_handler")
-    ws_client.on_close()
+    if NEED_SAVE:
+        print("------------------> send save")
+        ws_client.send("save:0")
+    return "wait_action"
 
 async def unknown_handler():
     print("--------unknown_handler")
@@ -131,6 +134,7 @@ async def train_loop():
         new_tr_state = await stateHandler()
         TRAIN_LOOP["state"] = new_tr_state
     print("train_loop end")
+    # ws_client.on_close()
 
 if __name__ == '__main__':
     config = ConfigEnv()

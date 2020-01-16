@@ -74,5 +74,9 @@ class Actor:
     def save(self, path):
         self.model.save_weights(path + '_actor.h5')
 
-    def load_weights(self, path):
-        self.model.load_weights(path)
+# keras_file = "keras_model.h5"
+# tf.keras.models.save_model(model, keras_file)
+
+
+    def load(self, path):
+        self.model.load_weights(path + '_actor.h5')

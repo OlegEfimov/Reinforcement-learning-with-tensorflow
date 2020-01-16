@@ -28,7 +28,7 @@ class WsClient(object):
         print("WsClient - unknown_state_handler")
 
     def on_message(self, message):
-        # print("recv %s" % str(message))
+        print("recv %s" % str(message))
         args = message.split(':')
         switcher = { 
             "action": self.action_handler,
