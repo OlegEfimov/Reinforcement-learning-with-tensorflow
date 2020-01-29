@@ -1,10 +1,10 @@
 import numpy as np
 import tensorflow as tf
-import keras.backend as K
+# import tensorflow.keras.backend as K
 
-from keras.initializers import RandomUniform
-from keras.models import Model
-from keras.layers import Input, Dense, Reshape, LSTM, Lambda, BatchNormalization, GaussianNoise, Flatten, Dropout
+# from tensorflow.keras.initializers import RandomUniform
+# from tensorflow.keras import Model
+# from tensorflow.keras.layers import Input, Dense, Reshape, LSTM, Lambda, BatchNormalization, GaussianNoise, Flatten, Dropout
 
 class Actor:
     """ Actor Network for the DDPG Algorithm
@@ -25,20 +25,20 @@ class Actor:
         activation for continuous control. We add parameter noise to encourage
         exploration, and balance it with Layer Normalization.
         """
-        inp = Input((self.env_dim))
+        inp = tf.keras.Input((self.env_dim))
         #
-        x = Dense(60, activation='relu')(inp)
-        x = GaussianNoise(1.0)(x)
+        x = tf.keras.layers.Dense(60, activation='relu')(inp)
+        x = tf.keras.layers.GaussianNoise(1.0)(x)
         #
-        x = Flatten()(x)
-        x = Dense(40, activation='relu')(x)
-        x = GaussianNoise(1.0)(x)
-        x = Dropout(0.5)(x)
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(40, activation='relu')(x)
+        x = tf.keras.layers.GaussianNoise(1.0)(x)
+        x = tf.keras.layers.Dropout(0.5)(x)
         #
-        out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(x)
-        out = Lambda(lambda i: i * self.act_range)(out)
+        out = tf.keras.layers.Dense(self.act_dim, activation='tanh', kernel_initializer=tf.keras.initializers.RandomUniform())(x)
+        out = tf.keras.layers.Lambda(lambda i: i * self.act_range)(out)
         #
-        return Model(inp, out)
+        return tf.keras.Model(inp, out)
 
     def predict(self, state):
         """ Action prediction
@@ -66,17 +66,17 @@ class Actor:
     def optimizer(self):
         """ Actor Optimizer
         """
-        action_gdts = K.placeholder(shape=(None, self.act_dim))
+        action_gdts = tf.keras.backend.placeholder(shape=(None, self.act_dim))
         params_grad = tf.gradients(self.model.output, self.model.trainable_weights, -action_gdts)
         grads = zip(params_grad, self.model.trainable_weights)
-        return K.function([self.model.input, action_gdts], [tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
+        return tf.keras.backend.function([self.model.input, action_gdts], [tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
 
     def save(self, path):
-        self.model.save_weights(path + '_actor.h5')
+        self.model.save_weights('model_actor.h5')
 
-# keras_file = "keras_model.h5"
-# tf.keras.models.save_model(model, keras_file)
-
+        converter = tf.lite.TFLiteConverter.from_keras_model_file('model_actor.h5')
+        tflite_model = converter.convert()
+        open("converted_model_tf1.tflite", "wb").write(tflite_model)
 
     def load(self, path):
         self.model.load_weights(path + '_actor.h5')

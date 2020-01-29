@@ -5,53 +5,63 @@ import numpy as np
 import os
 
 
-def ddpg(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100, 
-         replay_size=int(1e6), discount=0.99, polyak=0.995, pi_lr=1e-3, q_lr=1e-3, 
-         batch_size=100, start_steps=10000, act_noise=0.1, max_ep_len=1000, 
-         save_freq=1):
+class DDPG:
+    """ Deep Deterministic Policy Gradient (DDPG) Helper Class
+    """
 
-    # Set random seed for relevant modules
-    tf.random.set_seed(seed)
-    np.random.seed(seed)
+    # def __init__(self, act_dim, env_dim, act_range, k, buffer_size = 2000, gamma = 0.99, lr = 0.0005, tau = 0.01):
 
-    # Create environment
-    env, test_env = env_fn(), env_fn()
-    obs_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.shape[0]
+    def __init__(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100, 
+             replay_size=int(1e6), discount=0.99, polyak=0.995, pi_lr=1e-3, q_lr=1e-3, 
+             batch_size=100, start_steps=10000, act_noise=0.1, max_ep_len=1000, 
+             save_freq=1):
+
+        # Set random seed for relevant modules
+        tf.random.set_seed(seed)
+        np.random.seed(seed)
+        self.discount = discount
+        self.act_noise = act_noise
+
+        # Create environment
+        self.env, self.test_env = env_fn(), env_fn()
+        self.obs_dim = self.env.observation_space.shape[0]
+        self.act_dim = self.env.action_space.shape[0]
 
 
-    # Action limit for clipping
-    # Assumes all dimensions have the same limit
-    act_limit = env.action_space.high[0]
+        # Action limit for clipping
+        # Assumes all dimensions have the same limit
+        self.ac_kwargs = ac_kwargs
+        # self.act_limit = self.env.action_space.high[0]
+        self.act_limit = 1
 
-    # Give actor-critic model access to action space
-    ac_kwargs['action_space'] = env.action_space
+        # Give actor-critic model access to action space
+        self.ac_kwargs['action_space'] = self.env.action_space
 
-    # Randomly initialise critic and actor networks
-    critic = Critic(input_shape=(batch_size, obs_dim + act_dim), lr=q_lr, **ac_kwargs)
-    actor = Actor(input_shape=(batch_size, obs_dim), lr=pi_lr, **ac_kwargs)
+        # Randomly initialise critic and actor networks
+        self.critic = Critic(input_shape=(batch_size, self.obs_dim + self.act_dim), lr=q_lr, **self.ac_kwargs)
+        self.actor = Actor(input_shape=(batch_size, self.obs_dim), lr=pi_lr, **self.ac_kwargs)
 
-    # Initialise target networks with the same weights as main networks
-    critic_target = Critic(input_shape=(batch_size, obs_dim + act_dim), **ac_kwargs)
-    actor_target = Actor(input_shape=(batch_size, obs_dim), **ac_kwargs)
-    critic_target.set_weights(critic.get_weights())
-    actor_target.set_weights(actor.get_weights())
+        # Initialise target networks with the same weights as main networks
+        self.critic_target = Critic(input_shape=(batch_size, self.obs_dim + self.act_dim), **self.ac_kwargs)
+        self.actor_target = Actor(input_shape=(batch_size, self.obs_dim), **self.ac_kwargs)
+        self.critic_target.set_weights(self.critic.get_weights())
+        self.actor_target.set_weights(self.actor.get_weights())
 
-    # Initialise replay buffer for storing and getting batches of transitions
-    replay_buffer = ReplayBuffer(obs_dim, act_dim, size=replay_size)
+        # Initialise replay buffer for storing and getting batches of transitions
+        self.replay_buffer = ReplayBuffer(self.obs_dim, self.act_dim, size=replay_size)
 
-    def policy_action(o, noise_scale):
+    def policy_action(self, o):
         """
         Computes an action from the policy (as a function of the 
         observation `o`) with added noise (scaled by `noise_scale`),
         clipped within the bounds of the action space.
         """
-        a = actor(o.reshape(1, -1))
-        a += noise_scale * np.random.randn(act_dim)
-        return np.clip(a, -act_limit, act_limit)
+        a = self.actor(o.reshape(1, -1))
+        a += self.act_noise * np.random.randn(self.act_dim)
+        return np.clip(a, -self.act_limit, self.act_limit)
 
     @tf.function
-    def train_step(batch):
+    def train_step(self, batch):
         """
         Performs a gradient update on the actor and critic estimators
         from the given batch of transitions.
@@ -65,23 +75,23 @@ def ddpg(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100,
         """
         with tf.GradientTape(persistent=True) as tape:
             # Critic loss
-            q = critic(batch['obs1'], batch['acts'])
-            q_pi_targ = critic_target(batch['obs2'], actor_target(batch['obs2']))
-            backup = tf.stop_gradient(batch['rwds'] + discount * (1 - batch['done']) * q_pi_targ)
+            q = self.critic(batch['obs1'], batch['acts'])
+            q_pi_targ = self.critic_target(batch['obs2'], self.actor_target(batch['obs2']))
+            backup = tf.stop_gradient(batch['rwds'] + self.discount * (1 - batch['done']) * q_pi_targ)
             q_loss = tf.reduce_mean((q - backup)**2)
             # Actor loss
-            pi = actor(batch['obs1'])
-            q_pi = critic(batch['obs1'], pi)
+            pi = self.actor(batch['obs1'])
+            q_pi = self.critic(batch['obs1'], pi)
             pi_loss = -tf.reduce_mean(q_pi)
         # Q learning update
-        critic_gradients = tape.gradient(q_loss, critic.trainable_variables)
-        critic.optimizer.apply_gradients(zip(critic_gradients, critic.trainable_variables))
+        critic_gradients = tape.gradient(q_loss, self.critic.trainable_variables)
+        self.critic.optimizer.apply_gradients(zip(critic_gradients, self.critic.trainable_variables))
         # Policy update
-        actor_gradients = tape.gradient(pi_loss, actor.trainable_variables)
-        actor.optimizer.apply_gradients(zip(actor_gradients, actor.trainable_variables))
+        actor_gradients = tape.gradient(pi_loss, self.actor.trainable_variables)
+        self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_variables))
         return q, q_loss, pi_loss
 
-    def test_agent(n=10):
+    def test_agent(self, n=10):
         """
         Evaluates the deterministic (noise-free) policy with a sample 
         of `n` trajectories.
@@ -90,7 +100,7 @@ def ddpg(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100,
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
             while not(d or (ep_len == max_ep_len)):
                 # Take deterministic actions at test time (noise_scale=0)
-                o, r, d, _ = test_env.step(policy_action(o, 0))
+                o, r, d, _ = test_env.step(policy_action(o))
                 ep_ret += r
                 ep_len += 1
             logger.store(n, TestEpRet=ep_ret, TestEpLen=ep_len)
@@ -105,7 +115,7 @@ def ddpg(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100,
         noise added to keep up exploration (but less so).
         """
         if t > start_steps:
-            a = policy_action(o, act_noise)
+            a = policy_action(o)
         else:
             a = env.action_space.sample()
 
@@ -158,22 +168,3 @@ def ddpg(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100,
 
             # Test the performance of the deterministic policy
             test_agent()
-
-            # Log info about the epoch
-            logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestEpRet', with_min_and_max=True)
-            logger.log_tabular('EpLen', average_only=True)
-            logger.log_tabular('TestEpLen', average_only=True)
-            logger.log_tabular('TotalEnvInteracts', t+1)
-            logger.log_tabular('QVals', with_min_and_max=True)
-            logger.log_tabular('LossPi', average_only=True)
-            logger.log_tabular('LossQ', average_only=True)
-            logger.dump_tabular()
-
-
-def run(env_fn, logger_kwargs, args):
-    ddpg(env_fn, seed=args.seed, discount=args.discount,
-            ac_kwargs=dict(hidden_sizes=[args.hid]*args.l), 
-            epochs=args.epochs, batch_size=100,
-            steps_per_epoch=10000, logger_kwargs=logger_kwargs)
