@@ -11,11 +11,13 @@ class DDPG:
 
     # def __init__(self, act_dim, env_dim, act_range, k, buffer_size = 2000, gamma = 0.99, lr = 0.0005, tau = 0.01):
 
-    def __init__(env_fn, ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100, 
-             replay_size=int(1e6), discount=0.99, polyak=0.995, pi_lr=1e-3, q_lr=1e-3, 
-             batch_size=100, start_steps=10000, act_noise=0.1, max_ep_len=1000, 
-             save_freq=1):
+    def __init__(act_dim, env_dim, act_range,
+        ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100, 
+        replay_size=int(1e6), discount=0.99, polyak=0.995, pi_lr=1e-3, q_lr=1e-3, 
+        batch_size=100, start_steps=10000, act_noise=0.1, max_ep_len=1000, 
+        save_freq=1):
 
+        self.time = 0
         # Set random seed for relevant modules
         tf.random.set_seed(seed)
         np.random.seed(seed)
@@ -23,10 +25,9 @@ class DDPG:
         self.act_noise = act_noise
 
         # Create environment
-        self.env, self.test_env = env_fn(), env_fn()
-        self.obs_dim = self.env.observation_space.shape[0]
-        self.act_dim = self.env.action_space.shape[0]
-
+        # self.env, self.test_env = env_fn(), env_fn()
+        self.obs_dim = env_dim
+        self.act_dim = act_dim
 
         # Action limit for clipping
         # Assumes all dimensions have the same limit
@@ -35,7 +36,7 @@ class DDPG:
         self.act_limit = 1
 
         # Give actor-critic model access to action space
-        self.ac_kwargs['action_space'] = self.env.action_space
+        self.ac_kwargs['action_space'] = act_range
 
         # Randomly initialise critic and actor networks
         self.critic = Critic(input_shape=(batch_size, self.obs_dim + self.act_dim), lr=q_lr, **self.ac_kwargs)
@@ -91,80 +92,28 @@ class DDPG:
         self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_variables))
         return q, q_loss, pi_loss
 
-    def test_agent(self, n=10):
-        """
-        Evaluates the deterministic (noise-free) policy with a sample 
-        of `n` trajectories.
-        """
-        for _ in range(n):
-            o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
-            while not(d or (ep_len == max_ep_len)):
-                # Take deterministic actions at test time (noise_scale=0)
-                o, r, d, _ = test_env.step(policy_action(o))
-                ep_ret += r
-                ep_len += 1
-            logger.store(n, TestEpRet=ep_ret, TestEpLen=ep_len)
 
-    o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
-    total_steps = steps_per_epoch * epochs
-
-    for t in range(total_steps):
-        """
-        Start with `start_steps` number of steps with random actions,
-        to improve exploration. Then use the learned policy with some 
-        noise added to keep up exploration (but less so).
-        """
-        if t > start_steps:
-            a = policy_action(o)
-        else:
-            a = env.action_space.sample()
-
-        # Execute a step in the environment
-        o2, r, d, _ = env.step(a)
-        o2 = np.squeeze(o2)  # bug fix for Pendulum-v0 environment, where act_dim == 1
-        ep_ret += r
-        ep_len += 1
+    def learn(self, arg_old_state, arg_action, arg_reward, arg_new_state, arg_done):
+        o =  arg_old_state
+        o2 =  arg_new_state
+        r = arg_reward
+        d = arg_done
+        ep_ret = arg_reward
         
-        """
-        Ignore the "done" signal if it comes from hitting the time
-        horizon (that is, when it's an artificial terminal signal
-        that isn't based on the agent's state)
-        """
-        d = False if ep_len==max_ep_len else d
+        a = arg_action
+        a = np.clip(a+self.noise.generate(self.time), -self.act_range, self.act_range)
 
         # Store transition in replay buffer
         replay_buffer.store(o, a, r, o2, d)
 
-        # Advance the stored state
-        o = o2
+        batch = replay_buffer.sample_batch(batch_size)
 
-        if d or (ep_len == max_ep_len):
-            """
-            Perform all DDPG updates at the end of the trajectory,
-            in accordance with tuning done by TD3 paper authors.
-            """
-            for _ in range(ep_len):
-                batch = replay_buffer.sample_batch(batch_size)
+        # Actor-critic update
+        q, q_loss, pi_loss = train_step(batch)
+        logger.store((max_logger_steps, batch_size), QVals=q.numpy())
+        logger.store(max_logger_steps, LossQ=q_loss.numpy(), LossPi=pi_loss.numpy())
 
-                # Actor-critic update
-                q, q_loss, pi_loss = train_step(batch)
-                logger.store((max_logger_steps, batch_size), QVals=q.numpy())
-                logger.store(max_logger_steps, LossQ=q_loss.numpy(), LossPi=pi_loss.numpy())
-
-                # Target update
-                critic_target.polyak_update(critic, polyak)
-                actor_target.polyak_update(actor, polyak)
-
-            logger.store(max_logger_steps // max_ep_len, EpRet=ep_ret, EpLen=ep_len)
-            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
-
-        # Post-training for this epoch: save, test and write logs
-        if t > 0 and (t+1) % steps_per_epoch == 0:
-            epoch = (t+1) // steps_per_epoch
-
-            # Save the model
-            if (epoch % save_freq == 0) or (epoch == epochs - 1):
-                checkpoint.save(file_prefix=checkpoint_prefix)
-
-            # Test the performance of the deterministic policy
-            test_agent()
+        # Target update
+        critic_target.polyak_update(critic, polyak)
+        actor_target.polyak_update(actor, polyak)
+        self.time += 1
