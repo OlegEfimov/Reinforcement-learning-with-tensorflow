@@ -1,6 +1,9 @@
+from typing import Any, Tuple
+
 from actor_critic import Actor, Critic
 from replay_buffer import ReplayBuffer
 import tensorflow as tf
+from utils.networks import OrnsteinUhlenbeckProcess
 import numpy as np
 import os
 
@@ -8,10 +11,11 @@ import os
 class DDPG:
     """ Deep Deterministic Policy Gradient (DDPG) Helper Class
     """
+    input_shape0: Tuple[int, Any]
 
     # def __init__(self, act_dim, env_dim, act_range, k, buffer_size = 2000, gamma = 0.99, lr = 0.0005, tau = 0.01):
 
-    def __init__(act_dim, env_dim, act_range,
+    def __init__(self, act_dim, env_dim, act_range,
         ac_kwargs=dict(), seed=0, steps_per_epoch=5000, epochs=100, 
         replay_size=int(1e6), discount=0.99, polyak=0.995, pi_lr=1e-3, q_lr=1e-3, 
         batch_size=100, start_steps=10000, act_noise=0.1, max_ep_len=1000, 
@@ -34,9 +38,13 @@ class DDPG:
         self.ac_kwargs = ac_kwargs
         # self.act_limit = self.env.action_space.high[0]
         self.act_limit = 1
+        self.batch_size = batch_size
+        self.polyak = polyak
 
         # Give actor-critic model access to action space
+        self.act_range = act_range
         self.ac_kwargs['action_space'] = act_range
+        self.input_shape0 = (batch_size, self.obs_dim + self.act_dim)
 
         # Randomly initialise critic and actor networks
         self.critic = Critic(input_shape=(batch_size, self.obs_dim + self.act_dim), lr=q_lr, **self.ac_kwargs)
@@ -50,6 +58,7 @@ class DDPG:
 
         # Initialise replay buffer for storing and getting batches of transitions
         self.replay_buffer = ReplayBuffer(self.obs_dim, self.act_dim, size=replay_size)
+        self.noise = OrnsteinUhlenbeckProcess(size=self.act_dim)
 
     def policy_action(self, o):
         """
@@ -104,16 +113,16 @@ class DDPG:
         a = np.clip(a+self.noise.generate(self.time), -self.act_range, self.act_range)
 
         # Store transition in replay buffer
-        replay_buffer.store(o, a, r, o2, d)
+        self.replay_buffer.store(o, a, r, o2, d)
 
-        batch = replay_buffer.sample_batch(batch_size)
+        batch = self.replay_buffer.sample_batch(self.batch_size)
 
         # Actor-critic update
-        q, q_loss, pi_loss = train_step(batch)
-        logger.store((max_logger_steps, batch_size), QVals=q.numpy())
-        logger.store(max_logger_steps, LossQ=q_loss.numpy(), LossPi=pi_loss.numpy())
+        q, q_loss, pi_loss = self.train_step(batch)
+        # logger.store((max_logger_steps, self.batch_size), QVals=q.numpy())
+        # logger.store(max_logger_steps, LossQ=q_loss.numpy(), LossPi=pi_loss.numpy())
 
         # Target update
-        critic_target.polyak_update(critic, polyak)
-        actor_target.polyak_update(actor, polyak)
+        self.critic_target.polyak_update(self.critic, self.polyak)
+        self.actor_target.polyak_update(self.actor, self.polyak)
         self.time += 1

@@ -1,18 +1,20 @@
 import numpy as np
-from alg_ddpg import DDPG
+from alg_ddpg_tf2 import DDPG
 
 class Agent(object):
     def __init__(self, config_env):
         self.env = config_env
         self.STATE_DIM = (self.env.STATE_DIM,)
+        # self.STATE_DIM = self.env.STATE_DIM
         self.ACTION_DIM = self.env.ACTION_DIM
         self.ACTION_RANGE = np.array(self.env.ACTION_RANGE)
         self.old_state = None
         self.new_state = None
         self.reward = None
         self.action = 0
-        self.consecutive_frames = 1
-        self.alg = DDPG(self.ACTION_DIM, self.STATE_DIM, self.ACTION_RANGE, self.consecutive_frames)
+        # self.consecutive_frames = 1
+        self.alg = DDPG(self.ACTION_DIM, self.STATE_DIM[0], self.ACTION_RANGE)
+        print('Agent _init_')
 
     def init(self):
         print("Agent init()")
@@ -51,7 +53,7 @@ class Agent(object):
 
         self.action = self.alg.policy_action(self.new_state)
 
-        return self.action
+        return self.action[0]
 
 
     def handle_save(self, arg_str):

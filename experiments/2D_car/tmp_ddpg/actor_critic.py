@@ -63,7 +63,8 @@ class Actor(RLEstimator):
         super(Actor, self).__init__(**kwargs)
         self.action_space = action_space
         act_dim = self.action_space.shape[0]
-        self.act_limit = self.action_space.high[0]
+        # self.act_limit = self.action_space.high[0]
+        self.act_limit = 2.0
         self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)
 
     @tf.function

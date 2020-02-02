@@ -1,9 +1,9 @@
 
 class ConfigEnv(object):
-  MAX_EPISODES = 3
-  MAX_EP_STEPS = 10
-  # MAX_EPISODES = 200
-  # MAX_EP_STEPS = 300
+  # MAX_EPISODES = 3
+  # MAX_EP_STEPS = 10
+  MAX_EPISODES = 200
+  MAX_EP_STEPS = 300
 
   # MAX_EPISODES = 500
   # MAX_EP_STEPS = 600
