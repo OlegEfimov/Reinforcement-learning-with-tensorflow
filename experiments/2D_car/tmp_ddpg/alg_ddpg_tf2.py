@@ -126,3 +126,14 @@ class DDPG:
         self.critic_target.polyak_update(self.critic, self.polyak)
         self.actor_target.polyak_update(self.actor, self.polyak)
         self.time += 1
+
+    def save(self, path):
+        # path += '_LR_{}'.format(self.lr)
+        self.actor.save(path)
+        self.critic.save(path)
+
+    def load(self, path_actor, path_critic):
+        path_actor += '_LR_{}'.format(self.lr)
+        path_critic += '_LR_{}'.format(self.lr)
+        self.critic.load(path_critic)
+        self.actor.load(path_actor)
