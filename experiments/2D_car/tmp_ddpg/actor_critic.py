@@ -64,11 +64,12 @@ class Actor(RLEstimator):
         self.action_space = action_space
         act_dim = self.action_space.shape[0]
         # self.act_limit = self.action_space.high[0]
-        self.act_limit = 2.0
+        self.act_limit = 1.0
         self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)
 
     def save(self, path):
-        self.model.save_weights('model_actor.h5')
+        # self.model.summary()
+        # self.model.save_weights('model_actor.h5')
         converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
         tflite_model = converter.convert()
         open("converted_model_tf1.tflite", "wb").write(tflite_model)
@@ -108,7 +109,9 @@ class Critic(RLEstimator):
         self.model = arch(list(hidden_sizes) + [1], activation, None, input_shape)
 
     def save(self, path):
-        self.model.save_weights('model_critic.h5')
+        print('critic save')
+        # self.model.summary()
+        # self.model.save_weights('model_critic.h5')
         # converter = tf.lite.TFLiteConverter.from_keras_model_file('model_actor.h5')
         # tflite_model = converter.convert()
         # open("converted_model_tf1.tflite", "wb").write(tflite_model)
