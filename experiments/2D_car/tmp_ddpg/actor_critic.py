@@ -7,8 +7,11 @@ Actor and critic models.
 author: Ben Cottier (git: bencottier)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-# from mlp import MLP
+from mlp import MLP
 import tensorflow as tf
+from tensorflow.keras.layers import Dense, Concatenate, Flatten
+from tensorflow.keras import Model, Input
+from tensorflow.keras.initializers import RandomUniform
 import numpy as np
 
 
@@ -67,7 +70,8 @@ class Actor(RLEstimator):
         # self.act_limit = self.action_space.high[0]
         self.act_limit = 1.0
         # self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)
-        self.model = self.network(input_size, act_dim )
+        self.model = self.network(input_shape[1], act_dim)
+        self.model.summary()
 
     def network(self, input_size, act_dim):
         """ Actor Network for Policy function Approximation, using a tanh
@@ -132,21 +136,28 @@ class Critic(RLEstimator):
         super(Critic, self).__init__(**kwargs)
         # self.model = arch(list(hidden_sizes) + [1], activation, None, input_shape)
         self.model = self.network(input_shape[1])
+        # self.model = self.network()
+        self.model.summary()
 
     def network(self, input_size):
+    # def network(self):
+
         """ Assemble Critic network to predict q-values
         """
         # state = Input((self.env_dim))
         # action = Input((self.act_dim,))
-        state = Input((input_size))
-        x = Dense(80, activation='relu')(state)
-        # x = concatenate([Flatten()(x), action])
+        state_action = Input((7,))
+        state = Input((6,))
+        action = Input((1,))
+        x = Dense(80, activation='relu')(state_action)
+        # x = Concatenate([Flatten()(x), action])
         x = Dense(80, activation='relu')(x)
         x = Dense(70, activation='relu')(x)
         x = Dense(60, activation='relu')(x)
         x = Dense(50, activation='relu')(x)
         out = Dense(1, activation='linear', kernel_initializer=RandomUniform())(x)
-        return Model([state, action], out)
+        # return Model([state, action], out)
+        return Model([state_action], out)
 
     def save(self, path):
         print('critic save')
