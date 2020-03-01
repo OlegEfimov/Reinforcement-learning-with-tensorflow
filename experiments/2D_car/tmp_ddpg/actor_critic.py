@@ -7,7 +7,7 @@ Actor and critic models.
 author: Ben Cottier (git: bencottier)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from mlp import MLP
+# from mlp import MLP
 import tensorflow as tf
 import numpy as np
 
@@ -65,7 +65,28 @@ class Actor(RLEstimator):
         act_dim = self.action_space.shape[0]
         # self.act_limit = self.action_space.high[0]
         self.act_limit = 1.0
-        self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)
+        # self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)
+        self.model = self.network()
+
+    def network(self):
+        """ Actor Network for Policy function Approximation, using a tanh
+        activation for continuous control. We add parameter noise to encourage
+        exploration, and balance it with Layer Normalization.
+        """
+        inp = tf.keras.Input((self.env_dim))
+        #
+        x = tf.keras.layers.Dense(60, activation='relu')(inp)
+        x = tf.keras.layers.GaussianNoise(1.0)(x)
+        #
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(40, activation='relu')(x)
+        x = tf.keras.layers.GaussianNoise(1.0)(x)
+        x = tf.keras.layers.Dropout(0.5)(x)
+
+        out = tf.keras.layers.Dense(self.act_dim, activation='tanh', kernel_initializer=tf.keras.initializers.RandomUniform())(x)
+        out = tf.keras.layers.Lambda(lambda i: i * self.act_range)(out)
+
+        return tf.keras.Model(inp, out)
 
     def save(self, path):
         # self.model.summary()
@@ -106,7 +127,22 @@ class Critic(RLEstimator):
                 to the model.
         """
         super(Critic, self).__init__(**kwargs)
-        self.model = arch(list(hidden_sizes) + [1], activation, None, input_shape)
+        # self.model = arch(list(hidden_sizes) + [1], activation, None, input_shape)
+        self.model = self.network()
+
+    def network(self):
+        """ Assemble Critic network to predict q-values
+        """
+        state = Input((self.env_dim))
+        action = Input((self.act_dim,))
+        x = Dense(80, activation='relu')(state)
+        x = concatenate([Flatten()(x), action])
+        x = Dense(80, activation='relu')(x)
+        x = Dense(70, activation='relu')(x)
+        x = Dense(60, activation='relu')(x)
+        x = Dense(50, activation='relu')(x)
+        out = Dense(1, activation='linear', kernel_initializer=RandomUniform())(x)
+        return Model([state, action], out)
 
     def save(self, path):
         print('critic save')
