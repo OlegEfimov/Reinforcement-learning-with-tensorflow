@@ -146,9 +146,9 @@ class Critic(RLEstimator):
         """
         # state = Input((self.env_dim))
         # action = Input((self.act_dim,))
-        state_action = Input((7,))
-        state = Input((6,))
-        action = Input((1,))
+        state_action = Input((input_size,))
+        # state = Input((6,))
+        # action = Input((1,))
         x = Dense(80, activation='relu')(state_action)
         # x = Concatenate([Flatten()(x), action])
         x = Dense(80, activation='relu')(x)
