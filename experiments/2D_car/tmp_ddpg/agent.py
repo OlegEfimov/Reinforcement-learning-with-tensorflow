@@ -11,7 +11,7 @@ class Agent(object):
         self.old_state = None
         self.new_state = None
         self.reward = None
-        self.action = 0
+        self.action = [0,0]
         # self.consecutive_frames = 1
         self.alg = DDPG(self.ACTION_DIM, self.STATE_DIM[0], self.ACTION_RANGE)
         print('Agent _init_')
