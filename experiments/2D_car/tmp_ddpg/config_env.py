@@ -23,4 +23,4 @@ class ConfigEnv(object):
   STATE_DIM = 10
   ACTION_DIM = 2
   ACTION_BOUND = [-1.0, 1.0]
-  ACTION_RANGE = [1.0]
+  ACTION_RANGE = [2.0]
