@@ -66,7 +66,8 @@ class Actor(RLEstimator):
         super(Actor, self).__init__(**kwargs)
         self.act_range = np.array([1.0])
         self.action_space = action_space
-        act_dim = self.action_space.shape[0]
+        # act_dim = self.action_space.shape[0]
+        act_dim = 2
         # self.act_limit = self.action_space.high[0]
         self.act_limit = 1.0
         # self.model = arch(list(hidden_sizes) + [act_dim], activation, 'tanh', input_shape)

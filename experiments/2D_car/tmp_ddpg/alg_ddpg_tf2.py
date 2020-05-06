@@ -86,7 +86,9 @@ class DDPG:
         with tf.GradientTape(persistent=True) as tape:
             # Critic loss
             q = self.critic(batch['obs1'], batch['acts'])
-            q_pi_targ = self.critic_target(batch['obs2'], self.actor_target(batch['obs2']))
+            actor_target_rezult = self.actor_target(batch['obs2'])
+            q_pi_targ = self.critic_target(batch['obs2'], actor_target_rezult)
+            # q_pi_targ = self.critic_target(batch['obs2'], self.actor_target(batch['obs2']))
             backup = tf.stop_gradient(batch['rwds'] + self.discount * (1 - batch['done']) * q_pi_targ)
             q_loss = tf.reduce_mean((q - backup)**2)
             # Actor loss
