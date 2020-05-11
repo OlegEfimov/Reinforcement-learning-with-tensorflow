@@ -6,4 +6,5 @@
 *.vscode
 *.idea
 /experiments/2D_car/tmp_save
+/experiments/2D_car/tmp_ddpg000
 

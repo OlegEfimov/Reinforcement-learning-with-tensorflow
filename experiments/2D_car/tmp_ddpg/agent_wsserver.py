@@ -26,7 +26,7 @@ async def unregister(websocket):
     # await notify_client(websocket,'unregister_done')
 
 async def state_handler(websocket, arg_str):
-    print("state_handler(arg_str) arg_str=%s" % arg_str)
+    # print("state_handler(arg_str) arg_str=%s" % arg_str)
     action = agent.handle_new_state(arg_str)
     message = "action:"
     for num in action:
@@ -54,7 +54,7 @@ async def mess_handler(websocket, path):
         await unregister(websocket)
 
 def mess_selector(message):
-    print("mess_selector(message) message=%s", message)
+    # print("mess_selector(message) message=%s", message)
     args = message.split(':')
     switcher = { 
         "state": state_handler,

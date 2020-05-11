@@ -21,7 +21,7 @@ class Agent(object):
 
 
     def handle_new_state(self, arg_str):
-        print("agent-- handle_new_state(arg_str) arg_str=%s" % arg_str)
+        # print("agent-- handle_new_state(arg_str) arg_str=%s" % arg_str)
         args_str = arg_str.split(',')
         state_str = args_str[:self.STATE_DIM[0]]
         reward_str = args_str[self.STATE_DIM[0]]
